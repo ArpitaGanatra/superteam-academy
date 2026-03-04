@@ -139,6 +139,7 @@ export default function CourseCatalogPage() {
         <div className="relative mt-8">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
+            aria-label={t("courses.searchPlaceholder")}
             placeholder={t("courses.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -146,6 +147,7 @@ export default function CourseCatalogPage() {
           />
           {search && (
             <button
+              aria-label="Clear search"
               onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >

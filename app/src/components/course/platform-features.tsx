@@ -37,7 +37,7 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* Mini editor mockup */}
-            <div className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
+            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
               <div className="flex items-center gap-1.5 border-b border-border/30 px-3 py-2">
                 <div className="size-2 rounded-full bg-[#ff5f57]" />
                 <div className="size-2 rounded-full bg-[#febc2e]" />
@@ -100,7 +100,7 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* NFT card mockup */}
-            <div className="mt-5 mx-4 mb-4 flex items-center gap-3">
+            <div aria-hidden="true" className="mt-5 mx-4 mb-4 flex items-center gap-3">
               {[
                 {
                   name: t("landing.nftNameFundamentals"),
@@ -157,7 +157,7 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* XP progress mockup */}
-            <div className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] p-4">
+            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex size-8 items-center justify-center rounded-full bg-xp/10 text-xs font-bold text-xp">
@@ -222,7 +222,7 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* Leaderboard mockup */}
-            <div className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
+            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
               {[
                 {
                   rank: 1,

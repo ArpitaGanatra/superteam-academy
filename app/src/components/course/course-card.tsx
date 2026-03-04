@@ -38,7 +38,7 @@ export function CourseCard({ course }: { course: CourseDetail }) {
     <Link href={`/courses/${course.slug}`} className="group">
       <Card className="h-full border-border/50 bg-card/80 backdrop-blur-sm p-0 gap-0 overflow-hidden transition-all hover:border-primary/30 hover:bg-card hover:shadow-lg hover:shadow-primary/5">
         {/* Code preview header */}
-        <div className="relative h-36 overflow-hidden border-b border-border/50 bg-[#0c0c0e] px-5 pt-4">
+        <div aria-hidden="true" className="relative h-36 overflow-hidden border-b border-border/50 bg-[#0c0c0e] px-5 pt-4">
           <div
             className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-[60px] opacity-30"
             style={{ background: course.accent }}
