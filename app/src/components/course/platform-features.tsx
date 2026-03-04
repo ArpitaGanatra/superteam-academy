@@ -51,9 +51,7 @@ export function PlatformFeatures() {
                 </div>
                 <div>
                   <span className="text-muted-foreground/30">2 </span>
-                  <span style={{ color: "#babed8" }}>
-                    {"  "}let amount ={" "}
-                  </span>
+                  <span style={{ color: "#babed8" }}>{"  "}let amount = </span>
                   <span style={{ color: "#f78c6c" }}>1000</span>
                   <span style={{ color: "#89ddff" }}>;</span>
                 </div>
@@ -124,10 +122,7 @@ export function PlatformFeatures() {
                       border: `1px solid ${nft.color}30`,
                     }}
                   >
-                    <Shield
-                      className="size-5"
-                      style={{ color: nft.color }}
-                    />
+                    <Shield className="size-5" style={{ color: nft.color }} />
                   </div>
                   <p className="text-[10px] font-medium truncate">{nft.name}</p>
                   <p
@@ -194,7 +189,7 @@ export function PlatformFeatures() {
                         {day}
                       </span>
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>

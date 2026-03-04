@@ -31,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${outfit.variable} ${firaCode.variable} antialiased`}
-      >
+      <body className={`${outfit.variable} ${firaCode.variable} antialiased`}>
         <ThemeProvider>
           <div className="flex min-h-screen flex-col">
             <Header />

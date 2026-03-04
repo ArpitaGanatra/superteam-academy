@@ -20,12 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCourseBySlug, type Module } from "@/data/courses";
 
 /* ── Lesson type icon ── */
@@ -42,11 +37,13 @@ function ModuleSection({
   module,
   index,
   accent,
+  courseSlug,
   defaultOpen,
 }: {
   module: Module;
   index: number;
   accent: string;
+  courseSlug: string;
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -78,7 +75,8 @@ function ModuleSection({
             {completedCount > 0 && ` · ${completedCount} completed`}
           </p>
         </div>
-        {completedCount === module.lessons.length && module.lessons.length > 0 ? (
+        {completedCount === module.lessons.length &&
+        module.lessons.length > 0 ? (
           <CheckCircle2 className="size-4 shrink-0" style={{ color: accent }} />
         ) : (
           <ChevronDown
@@ -90,16 +88,14 @@ function ModuleSection({
       {open && (
         <div className="border-t border-border/50">
           {module.lessons.map((lesson, i) => (
-            <div
+            <Link
               key={lesson.id}
+              href={`/courses/${courseSlug}/lessons/${lesson.id}`}
               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
             >
               <div className="flex size-6 shrink-0 items-center justify-center">
                 {lesson.completed ? (
-                  <CheckCircle2
-                    className="size-4"
-                    style={{ color: accent }}
-                  />
+                  <CheckCircle2 className="size-4" style={{ color: accent }} />
                 ) : (
                   <span className="text-[10px] text-muted-foreground font-mono">
                     {String(i + 1).padStart(2, "0")}
@@ -111,7 +107,7 @@ function ModuleSection({
               <span className="text-xs text-muted-foreground shrink-0">
                 {lesson.duration}
               </span>
-            </div>
+            </Link>
           ))}
         </div>
       )}
@@ -167,7 +163,7 @@ export default function CourseDetailPage() {
 
   const totalModules = course.modules.length;
   const completedModules = course.modules.filter((m) =>
-    m.lessons.every((l) => l.completed)
+    m.lessons.every((l) => l.completed),
   ).length;
 
   return (
@@ -183,7 +179,10 @@ export default function CourseDetailPage() {
       <div className="relative z-10 mx-auto max-w-5xl px-6 pt-28 pb-20">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/courses" className="hover:text-foreground transition-colors">
+          <Link
+            href="/courses"
+            className="hover:text-foreground transition-colors"
+          >
             Courses
           </Link>
           <span>/</span>
@@ -323,22 +322,25 @@ export default function CourseDetailPage() {
                 <Button
                   className="mt-5 w-full font-medium"
                   size="lg"
+                  asChild
                   style={{
                     background: course.accent,
                     color: "#000",
                   }}
                 >
-                  {progress > 0 ? (
-                    <>
-                      Continue Learning
-                      <ArrowRight className="size-4" />
-                    </>
-                  ) : (
-                    <>
-                      Start Course
-                      <ArrowRight className="size-4" />
-                    </>
-                  )}
+                  <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}>
+                    {progress > 0 ? (
+                      <>
+                        Continue Learning
+                        <ArrowRight className="size-4" />
+                      </>
+                    ) : (
+                      <>
+                        Start Course
+                        <ArrowRight className="size-4" />
+                      </>
+                    )}
+                  </Link>
                 </Button>
 
                 {/* Instructor */}
@@ -384,6 +386,7 @@ export default function CourseDetailPage() {
                 module={module}
                 index={i}
                 accent={course.accent}
+                courseSlug={course.slug}
                 defaultOpen={i === 0}
               />
             ))}
@@ -439,13 +442,16 @@ export default function CourseDetailPage() {
           <Button
             size="lg"
             className="font-medium"
+            asChild
             style={{
               background: course.accent,
               color: "#000",
             }}
           >
-            {progress > 0 ? "Continue Learning" : "Start Course"}
-            <ArrowRight className="size-4" />
+            <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}>
+              {progress > 0 ? "Continue Learning" : "Start Course"}
+              <ArrowRight className="size-4" />
+            </Link>
           </Button>
         </div>
       </div>

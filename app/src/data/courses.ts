@@ -53,7 +53,7 @@ function lesson(
   id: string,
   title: string,
   duration: string,
-  type: Lesson["type"] = "reading"
+  type: Lesson["type"] = "reading",
 ): Lesson {
   return { id, title, duration, type, completed: false };
 }
@@ -193,7 +193,12 @@ export const courses: CourseDetail[] = [
         title: "Keys & Wallets",
         lessons: [
           lesson("l1", "Public & Private Keys", "8 min", "video"),
-          lesson("l2", "Wallet Standards (Wallet Adapter)", "10 min", "reading"),
+          lesson(
+            "l2",
+            "Wallet Standards (Wallet Adapter)",
+            "10 min",
+            "reading",
+          ),
           lesson("l3", "Generate a Keypair", "10 min", "challenge"),
         ],
       },
@@ -427,7 +432,12 @@ export const courses: CourseDetail[] = [
         title: "Unit Testing",
         lessons: [
           lesson("l4", "Mollusk for Fast Unit Tests", "10 min", "video"),
-          lesson("l5", "Testing Instructions Individually", "12 min", "reading"),
+          lesson(
+            "l5",
+            "Testing Instructions Individually",
+            "12 min",
+            "reading",
+          ),
           lesson("l6", "Mocking Accounts & Sysvars", "8 min", "reading"),
           lesson("l7", "Write Unit Tests", "15 min", "challenge"),
         ],

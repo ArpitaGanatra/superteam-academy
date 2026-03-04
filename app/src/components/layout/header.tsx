@@ -62,7 +62,12 @@ export function Header() {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="Menu">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="md:hidden"
+                aria-label="Menu"
+              >
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
@@ -70,7 +75,12 @@ export function Header() {
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <nav className="flex flex-col gap-1 pt-8">
                 {navLinks.map((link) => (
-                  <Button key={link.href} variant="ghost" asChild className="justify-start">
+                  <Button
+                    key={link.href}
+                    variant="ghost"
+                    asChild
+                    className="justify-start"
+                  >
                     <Link href={link.href}>{link.label}</Link>
                   </Button>
                 ))}

@@ -53,10 +53,7 @@ const paths = [
   },
 ];
 
-function matchesDuration(
-  courseDuration: string,
-  filter: string
-): boolean {
+function matchesDuration(courseDuration: string, filter: string): boolean {
   const hours = parseInt(courseDuration);
   if (filter === "< 3h") return hours < 3;
   if (filter === "3-4h") return hours >= 3 && hours <= 4;
@@ -66,11 +63,14 @@ function matchesDuration(
 
 export default function CourseCatalogPage() {
   const [search, setSearch] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
+    null,
+  );
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
 
-  const hasFilters = selectedDifficulty || selectedTopic || selectedDuration || search;
+  const hasFilters =
+    selectedDifficulty || selectedTopic || selectedDuration || search;
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -82,7 +82,8 @@ export default function CourseCatalogPage() {
         )
           return false;
       }
-      if (selectedDifficulty && c.difficulty !== selectedDifficulty) return false;
+      if (selectedDifficulty && c.difficulty !== selectedDifficulty)
+        return false;
       if (selectedTopic && c.topic !== selectedTopic) return false;
       if (selectedDuration && !matchesDuration(c.duration, selectedDuration))
         return false;
@@ -164,9 +165,7 @@ export default function CourseCatalogPage() {
           {topics.map((t) => (
             <button
               key={t}
-              onClick={() =>
-                setSelectedTopic(selectedTopic === t ? null : t)
-              }
+              onClick={() => setSelectedTopic(selectedTopic === t ? null : t)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 selectedTopic === t
                   ? "border-primary bg-primary text-primary-foreground"
@@ -271,7 +270,7 @@ export default function CourseCatalogPage() {
                 key={path.name}
                 onClick={() =>
                   setSelectedTopic(
-                    selectedTopic === path.topic ? null : path.topic
+                    selectedTopic === path.topic ? null : path.topic,
                   )
                 }
                 className={`group flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
