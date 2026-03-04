@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCourseBySlug, type Module } from "@/data/courses";
+import { getCourse } from "@/lib/sanity-fetch";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useLocale } from "@/providers/locale-provider";
@@ -176,12 +177,18 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const course = getCourseBySlug(slug);
+  const [course, setCourse] = useState(getCourseBySlug(slug) ?? null);
   const { publicKey, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { t } = useLocale();
   const [enrollmentStatus, setEnrollmentStatus] =
     useState<EnrollmentStatus>("not-enrolled");
+
+  useEffect(() => {
+    getCourse(slug).then((c) => {
+      if (c) setCourse(c);
+    });
+  }, [slug]);
 
   useEffect(() => {
     if (!connected || !publicKey || !course) {

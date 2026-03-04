@@ -49,9 +49,11 @@ export const queries = {
     longDescription,
     difficulty,
     topic,
+    topicLabel,
     duration,
     xp,
     accent,
+    icon,
     codePreview,
     "instructor": instructor->{name, role, bio, avatar},
     modules[] {
@@ -72,17 +74,20 @@ export const queries = {
   }`,
 
   lessonContent: `*[_type == "course" && slug.current == $courseSlug][0] {
-    modules[].lessons[_key == $lessonId][0] {
-      title,
-      type,
-      body,
-      starterCode,
-      solutionCode,
-      hints,
-      testCases[] {
-        name,
-        input,
-        expected
+    modules[] {
+      lessons[_key == $lessonId] {
+        _key,
+        title,
+        type,
+        markdown,
+        starterCode,
+        solutionCode,
+        hints,
+        testCases[] {
+          name,
+          input,
+          expected
+        }
       }
     }
   }`,

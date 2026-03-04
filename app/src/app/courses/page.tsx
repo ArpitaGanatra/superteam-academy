@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   X,
@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CourseCard } from "@/components/course/course-card";
-import { courses } from "@/data/courses";
+import { courses as hardcodedCourses } from "@/data/courses";
+import { getAllCourses } from "@/lib/sanity-fetch";
 import { useLocale } from "@/providers/locale-provider";
 
 /* ── Filter config ── */
@@ -33,12 +34,17 @@ function matchesDuration(courseDuration: string, filter: string): boolean {
 
 export default function CourseCatalogPage() {
   const { t } = useLocale();
+  const [courses, setCourses] = useState(hardcodedCourses);
   const [search, setSearch] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
     null,
   );
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAllCourses().then(setCourses);
+  }, []);
 
   const hasFilters =
     selectedDifficulty || selectedTopic || selectedDuration || search;

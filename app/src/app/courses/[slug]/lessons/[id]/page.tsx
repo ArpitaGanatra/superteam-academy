@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/resizable";
 import { getCourseBySlug } from "@/data/courses";
 import { getLessonContent, type TestCase } from "@/data/lesson-content";
+import { getCourse, getLesson } from "@/lib/sanity-fetch";
 import { useLocale } from "@/providers/locale-provider";
 import {
   progressService,
@@ -523,7 +524,7 @@ function LessonSidebar({
   onClose,
 }: {
   courseSlug: string;
-  course: ReturnType<typeof getCourseBySlug>;
+  course: ReturnType<typeof getCourseBySlug> | null;
   currentLessonId: string;
   accent: string;
   onClose?: () => void;
@@ -635,11 +636,22 @@ export default function LessonPage() {
 }
 
 function LessonContent({ slug, id }: { slug: string; id: string }) {
-  const course = getCourseBySlug(slug);
+  const [course, setCourse] = useState(getCourseBySlug(slug) ?? null);
   const { publicKey, connected } = useWallet();
   const { t, locale } = useLocale();
-  const lessonContent = getLessonContent(slug, id, locale);
+  const [lessonContent, setLessonContent] = useState(
+    getLessonContent(slug, id, locale),
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    getCourse(slug).then((c) => {
+      if (c) setCourse(c);
+    });
+    getLesson(slug, id, locale).then((l) => {
+      if (l) setLessonContent(l);
+    });
+  }, [slug, id, locale]);
   const [showSolution, setShowSolution] = useState(false);
   const [expandedHints, setExpandedHints] = useState<Set<number>>(new Set());
   const [autoSaved, setAutoSaved] = useState(false);
