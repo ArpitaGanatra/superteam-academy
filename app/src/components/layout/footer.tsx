@@ -94,7 +94,11 @@ export function Footer() {
                 className="mt-2 flex gap-2"
                 onSubmit={(e) => e.preventDefault()}
               >
+                <label htmlFor="newsletter-email" className="sr-only">
+                  {t("landing.footerNewsletter")}
+                </label>
                 <input
+                  id="newsletter-email"
                   type="email"
                   placeholder="you@email.com"
                   className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"

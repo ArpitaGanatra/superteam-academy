@@ -1,14 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight, GraduationCap, Globe, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LearningTracks } from "@/components/course/learning-tracks";
-import { SocialProof } from "@/components/course/social-proof";
-import { PlatformFeatures } from "@/components/course/platform-features";
 import { GlowButton } from "@/components/ui/glow-button";
 import { useLocale } from "@/providers/locale-provider";
+
+const SocialProof = dynamic(
+  () => import("@/components/course/social-proof").then((m) => m.SocialProof),
+  { ssr: false },
+);
+const PlatformFeatures = dynamic(
+  () =>
+    import("@/components/course/platform-features").then(
+      (m) => m.PlatformFeatures,
+    ),
+  { ssr: false },
+);
 
 /* ── Data ── */
 
@@ -104,7 +115,9 @@ export default function LandingPage() {
           </p>
 
           <div className="animate-blur-in delay-300 mt-12 flex flex-wrap items-center justify-center gap-6">
-            <Button size="lg">{t("landing.signUp")}</Button>
+            <Button size="lg" asChild>
+              <Link href="/settings">{t("landing.signUp")}</Link>
+            </Button>
             <GlowButton>
               <Button
                 variant="outline"
@@ -120,8 +133,8 @@ export default function LandingPage() {
             </GlowButton>
           </div>
 
-          {/* Terminal */}
-          <div className="animate-blur-in delay-400 mt-20">
+          {/* Terminal (decorative) */}
+          <div className="animate-blur-in delay-400 mt-20" aria-hidden="true">
             <Card className="terminal terminal-glow mx-auto max-w-2xl overflow-hidden rounded-xl border-primary/10 p-0 gap-0 text-left">
               <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5">
                 <div className="flex gap-1.5">

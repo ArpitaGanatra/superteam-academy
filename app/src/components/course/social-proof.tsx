@@ -128,25 +128,24 @@ export function SocialProof() {
           </p>
 
           {/* Scrolling strip - row 1 (left) */}
-          <div className="mt-8 relative">
-            {/* Fade edges */}
+          <div className="mt-8 relative h-[156px] overflow-hidden" aria-hidden="true">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-linear-to-r from-background to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-linear-to-l from-background to-transparent" />
 
             <div className="flex gap-5 animate-marquee-left">
-              {[...row1, ...row1, ...row1, ...row1].map((item, i) => (
+              {[...row1, ...row1].map((item, i) => (
                 <TestimonialCard key={i} {...item} />
               ))}
             </div>
           </div>
 
           {/* Scrolling strip - row 2 (right) */}
-          <div className="mt-5 relative">
+          <div className="mt-5 relative h-[156px] overflow-hidden" aria-hidden="true">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-linear-to-r from-background to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-linear-to-l from-background to-transparent" />
 
             <div className="flex gap-5 animate-marquee-right">
-              {[...row2, ...row2, ...row2, ...row2].map((item, i) => (
+              {[...row2, ...row2].map((item, i) => (
                 <TestimonialCard key={i} {...item} />
               ))}
             </div>
