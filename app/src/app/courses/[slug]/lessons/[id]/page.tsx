@@ -620,7 +620,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
     return (
       <div className="relative min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="size-12 text-muted-foreground/30 mx-auto" />
+          <BookOpen className="size-12 text-muted-foreground/60 mx-auto" />
           <h1 className="mt-4 text-xl font-semibold">Lesson not found</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             This lesson doesn&apos;t exist or has been removed.

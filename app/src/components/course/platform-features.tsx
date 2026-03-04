@@ -38,35 +38,35 @@ export function PlatformFeatures() {
                 <div className="size-2 rounded-full bg-[#ff5f57]" />
                 <div className="size-2 rounded-full bg-[#febc2e]" />
                 <div className="size-2 rounded-full bg-[#28c840]" />
-                <span className="ml-2 text-[10px] text-muted-foreground/40">
+                <span className="ml-2 text-[10px] text-muted-foreground/60">
                   challenge.rs
                 </span>
               </div>
               <div className="px-3 py-3 font-mono text-[11px] leading-[1.7]">
                 <div>
-                  <span className="text-muted-foreground/30">1 </span>
+                  <span className="text-muted-foreground/50">1 </span>
                   <span style={{ color: "#c792ea" }}>pub fn </span>
                   <span style={{ color: "#82aaff" }}>transfer</span>
                   <span style={{ color: "#babed8" }}>(ctx: Context) {"{"}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground/30">2 </span>
+                  <span className="text-muted-foreground/50">2 </span>
                   <span style={{ color: "#babed8" }}>{"  "}let amount = </span>
                   <span style={{ color: "#f78c6c" }}>1000</span>
                   <span style={{ color: "#89ddff" }}>;</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground/30">3 </span>
+                  <span className="text-muted-foreground/50">3 </span>
                   <span style={{ color: "#546e7a" }}>
                     {"  "}// Your code here
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-muted-foreground/30">4 </span>
+                  <span className="text-muted-foreground/50">4 </span>
                   <span className="ml-2 inline-block h-4 w-px animate-pulse bg-primary" />
                 </div>
                 <div>
-                  <span className="text-muted-foreground/30">5 </span>
+                  <span className="text-muted-foreground/50">5 </span>
                   <span style={{ color: "#89ddff" }}>{"}"}</span>
                 </div>
               </div>
@@ -180,12 +180,12 @@ export function PlatformFeatures() {
                         className={`mx-auto size-5 rounded-sm text-[8px] flex items-center justify-center ${
                           i < 5
                             ? "bg-primary/20 text-primary"
-                            : "bg-border/30 text-muted-foreground/30"
+                            : "bg-border/30 text-muted-foreground/50"
                         }`}
                       >
                         {i < 5 ? "✓" : ""}
                       </div>
-                      <span className="text-[8px] text-muted-foreground/40 mt-0.5 block">
+                      <span className="text-[8px] text-muted-foreground/60 mt-0.5 block">
                         {day}
                       </span>
                     </div>

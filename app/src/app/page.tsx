@@ -135,7 +135,7 @@ export default function LandingPage() {
                 <div className="px-5 py-4 text-[13px] leading-[1.8] overflow-x-auto">
                   {codeLines.map((line, i) => (
                     <div key={i} className="flex">
-                      <span className="w-7 shrink-0 select-none pr-3 text-right text-[11px] text-muted-foreground/30">
+                      <span className="w-7 shrink-0 select-none pr-3 text-right text-[11px] text-muted-foreground/50">
                         {i + 1}
                       </span>
                       <span style={{ paddingLeft: `${line.indent * 18}px` }}>
@@ -309,23 +309,23 @@ export default function LandingPage() {
                   </div>
                   <div className="px-3 py-2.5 font-mono text-[10px] leading-[1.7] text-left">
                     <div>
-                      <span className="text-muted-foreground/30">1 </span>
+                      <span className="text-muted-foreground/50">1 </span>
                       <span style={{ color: "#c792ea" }}>pub fn </span>
                       <span style={{ color: "#82aaff" }}>swap</span>
                       <span style={{ color: "#babed8" }}>(ctx) {"{"}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground/30">2 </span>
+                      <span className="text-muted-foreground/50">2 </span>
                       <span style={{ color: "#546e7a" }}>
                         {"  // your code"}
                       </span>
                     </div>
                     <div className="flex items-center">
-                      <span className="text-muted-foreground/30">3 </span>
+                      <span className="text-muted-foreground/50">3 </span>
                       <span className="ml-1 inline-block h-3 w-px animate-pulse bg-primary" />
                     </div>
                     <div>
-                      <span className="text-muted-foreground/30">4 </span>
+                      <span className="text-muted-foreground/50">4 </span>
                       <span style={{ color: "#89ddff" }}>{"}"}</span>
                     </div>
                   </div>
@@ -374,7 +374,7 @@ export default function LandingPage() {
                     </span>
                     <div className="h-px flex-1 bg-border/30" />
                   </div>
-                  <p className="mt-2 font-mono text-[8px] text-muted-foreground/40 truncate">
+                  <p className="mt-2 font-mono text-[8px] text-muted-foreground/60 truncate">
                     mint: 7xKp...3nFq
                   </p>
                 </div>

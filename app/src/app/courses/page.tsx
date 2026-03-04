@@ -310,7 +310,7 @@ export default function CourseCatalogPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <BookOpen className="size-10 text-muted-foreground/30" />
+              <BookOpen className="size-10 text-muted-foreground/60" />
               <p className="mt-4 text-lg font-medium">No courses found</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Try adjusting your filters or search terms.

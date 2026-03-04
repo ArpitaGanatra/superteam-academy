@@ -256,6 +256,25 @@ body {
 .animate-marquee-left { animation: marquee-left 40s linear infinite; }
 .animate-marquee-right { animation: marquee-right 40s linear infinite; }
 
+/* ── Achievement badge hexagon ── */
+.badge-hex {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+@keyframes badge-shine {
+  0%, 60% { transform: translateX(-180%); }
+  100% { transform: translateX(280%); }
+}
+
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-badge-float {
+  animation: badge-float 3s ease-in-out infinite;
+}
+
 .delay-100 { animation-delay: 0.1s; }
 .delay-200 { animation-delay: 0.2s; }
 .delay-300 { animation-delay: 0.3s; }
