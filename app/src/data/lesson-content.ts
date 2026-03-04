@@ -1,3 +1,9 @@
+export interface TestCase {
+  name: string;
+  input: string;
+  expected: string;
+}
+
 export interface LessonContent {
   courseSlug: string;
   lessonId: string;
@@ -7,7 +13,7 @@ export interface LessonContent {
   starterCode?: string;
   solutionCode?: string;
   hints?: string[];
-  testCases?: { input: string; expected: string }[];
+  testCases?: TestCase[];
 }
 
 /* ── Sample lesson content for Solana Fundamentals ── */
@@ -264,6 +270,28 @@ async function createCounterAccount(
       "The `createAccount` instruction needs: fromPubkey, newAccountPubkey, lamports, space, and programId.",
       "Both the payer and the new account need to sign the transaction.",
     ],
+    testCases: [
+      {
+        name: "Creates account with correct space",
+        input: "space = 8 bytes (u64 counter)",
+        expected: "Account created with 8 bytes of data space",
+      },
+      {
+        name: "Account is rent-exempt",
+        input: "lamports >= getMinimumBalanceForRentExemption(8)",
+        expected: "Account balance meets rent-exempt threshold",
+      },
+      {
+        name: "Correct program owner",
+        input: "programId = PROGRAM_ID",
+        expected: "Account owned by the target program",
+      },
+      {
+        name: "Both signers included",
+        input: "signers = [payer, counterAccount]",
+        expected: "Transaction signed by payer and new account",
+      },
+    ],
   },
   {
     courseSlug: "solana-fundamentals",
@@ -512,6 +540,33 @@ pub enum ErrorCode {
       "The Initialize struct needs three accounts: counter (init), user (mut, Signer), and system_program.",
       "Use `#[account(init, payer = user, space = 8 + 8)]` — 8 bytes for discriminator + 8 for u64.",
       "For increment, use `checked_add(1)` to prevent overflow — never use `+= 1` in on-chain code.",
+    ],
+    testCases: [
+      {
+        name: "Counter account struct defined",
+        input: "#[account] pub struct Counter",
+        expected: "Counter has a `count: u64` field",
+      },
+      {
+        name: "Initialize sets counter to 0",
+        input: "initialize(ctx)",
+        expected: "counter.count == 0",
+      },
+      {
+        name: "Increment adds 1",
+        input: "increment(ctx) after initialize",
+        expected: "counter.count == 1",
+      },
+      {
+        name: "Uses checked arithmetic",
+        input: "checked_add(1)",
+        expected: "Overflow returns ErrorCode::Overflow",
+      },
+      {
+        name: "Init allocates correct space",
+        input: "space = 8 + 8",
+        expected: "8 bytes discriminator + 8 bytes u64",
+      },
     ],
   },
 ];

@@ -328,7 +328,9 @@ export default function CourseDetailPage() {
                     color: "#000",
                   }}
                 >
-                  <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}>
+                  <Link
+                    href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+                  >
                     {progress > 0 ? (
                       <>
                         Continue Learning
@@ -448,7 +450,9 @@ export default function CourseDetailPage() {
               color: "#000",
             }}
           >
-            <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}>
+            <Link
+              href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+            >
               {progress > 0 ? "Continue Learning" : "Start Course"}
               <ArrowRight className="size-4" />
             </Link>
