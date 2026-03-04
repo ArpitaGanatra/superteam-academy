@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Menu } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Sun, Moon, Menu, Wallet, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -10,16 +12,38 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-const navLinks = [
-  { href: "/courses", label: "Courses" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/profile", label: "Profile" },
-];
+import { useLocale } from "@/providers/locale-provider";
+import { locales, localeNames, type Locale } from "@/i18n/config";
+import { useState, useRef, useEffect } from "react";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
+  const { publicKey, connected, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { locale, setLocale, t } = useLocale();
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const navLinks = [
+    { href: "/courses", label: t("nav.courses") },
+    { href: "/dashboard", label: t("nav.dashboard") },
+    { href: "/leaderboard", label: t("nav.leaderboard") },
+    { href: "/profile", label: t("nav.profile") },
+  ];
+
+  const truncatedAddress = publicKey
+    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
+    : null;
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
@@ -47,6 +71,39 @@ export function Header() {
 
         {/* Right */}
         <div className="flex items-center gap-2">
+          {/* Language Switcher */}
+          <div className="relative" ref={langRef}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowLangMenu(!showLangMenu)}
+              aria-label="Change language"
+            >
+              <Globe className="size-4" />
+            </Button>
+            {showLangMenu && (
+              <div className="absolute right-0 top-full mt-1 w-36 rounded-lg border border-border/40 bg-background/95 backdrop-blur-sm p-1 shadow-lg">
+                {locales.map((loc) => (
+                  <button
+                    key={loc}
+                    onClick={() => {
+                      setLocale(loc as Locale);
+                      setShowLangMenu(false);
+                    }}
+                    className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors ${
+                      locale === loc
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {localeNames[loc as Locale]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon-sm"
@@ -57,10 +114,37 @@ export function Header() {
             <Moon className="block size-4 dark:hidden" />
           </Button>
 
-          <Button size="sm" className="hidden md:inline-flex">
-            Connect Wallet
-          </Button>
+          {/* Wallet */}
+          {connected && truncatedAddress ? (
+            <div className="hidden md:flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-mono text-xs"
+              >
+                <Wallet className="size-3.5" />
+                {truncatedAddress}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => disconnect()}
+                aria-label="Disconnect wallet"
+              >
+                <LogOut className="size-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              className="hidden md:inline-flex"
+              onClick={() => setVisible(true)}
+            >
+              {t("common.connectWallet")}
+            </Button>
+          )}
 
+          {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -85,7 +169,24 @@ export function Header() {
                     <Link href={link.href}>{link.label}</Link>
                   </Button>
                 ))}
-                <Button className="mt-4">Connect Wallet</Button>
+                {connected && truncatedAddress ? (
+                  <div className="mt-4 space-y-2">
+                    <div className="rounded-lg border border-border/40 px-3 py-2 text-xs font-mono text-center">
+                      {truncatedAddress}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => disconnect()}
+                    >
+                      {t("common.disconnect")}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button className="mt-4" onClick={() => setVisible(true)}>
+                    {t("common.connectWallet")}
+                  </Button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

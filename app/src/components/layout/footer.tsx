@@ -2,24 +2,34 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/providers/locale-provider";
 
-const footerLinks = {
-  Platform: [
-    { href: "/courses", label: "Courses" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/dashboard", label: "Dashboard" },
-  ],
-  Resources: [
-    { href: "https://solana.com/docs", label: "Solana Docs" },
-    { href: "https://www.anchor-lang.com/", label: "Anchor" },
-    { href: "https://github.com/solanabr/superteam-academy", label: "GitHub" },
-  ],
-  Community: [
-    { href: "https://discord.gg/superteambrasil", label: "Discord" },
-    { href: "https://twitter.com/SuperteamBR", label: "X / Twitter" },
-    { href: "https://superteam.fun", label: "Superteam" },
-  ],
-};
+function useFooterLinks() {
+  const { t } = useLocale();
+  return {
+    [t("footer.platform")]: [
+      { href: "/courses", label: t("nav.courses") },
+      { href: "/leaderboard", label: t("nav.leaderboard") },
+      { href: "/dashboard", label: t("nav.dashboard") },
+    ],
+    [t("footer.resources")]: [
+      { href: "https://solana.com/docs", label: t("footer.docs") },
+      { href: "https://www.anchor-lang.com/", label: "Anchor" },
+      {
+        href: "https://github.com/solanabr/superteam-academy",
+        label: t("footer.github"),
+      },
+    ],
+    [t("footer.community")]: [
+      {
+        href: "https://discord.gg/superteambrasil",
+        label: t("footer.discord"),
+      },
+      { href: "https://twitter.com/SuperteamBR", label: t("footer.twitter") },
+      { href: "https://superteam.fun", label: "Superteam" },
+    ],
+  };
+}
 
 const socialLinks = [
   {
@@ -52,6 +62,8 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const { t } = useLocale();
+  const footerLinks = useFooterLinks();
   return (
     <footer className="border-t border-border/50">
       <div className="mx-auto max-w-5xl px-6 py-16">
@@ -77,7 +89,7 @@ export function Footer() {
             {/* Newsletter */}
             <div className="mt-6">
               <p className="text-xs font-medium text-muted-foreground">
-                Stay updated
+                {t("landing.footerNewsletter")}
               </p>
               <form
                 className="mt-2 flex gap-2"
@@ -89,7 +101,7 @@ export function Footer() {
                   className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
                 />
                 <Button size="sm" type="submit">
-                  Subscribe
+                  {t("landing.footerSubscribe")}
                 </Button>
               </form>
             </div>
@@ -102,7 +114,7 @@ export function Footer() {
                 {heading}
               </h4>
               <ul className="mt-4 space-y-2.5">
-                {links.map((link) => (
+                {(links as { href: string; label: string }[]).map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
@@ -120,8 +132,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-6 sm:flex-row">
           <span className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Superteam Brazil &middot; Open
-            source under MIT
+            &copy; {new Date().getFullYear()} {t("footer.copyright")}
           </span>
           <div className="flex items-center gap-1">
             {socialLinks.map((link) => (

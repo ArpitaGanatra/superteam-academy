@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Outfit, Fira_Code } from "next/font/google";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { SessionProvider } from "@/providers/session-provider";
+import { WalletProvider } from "@/providers/wallet-provider";
+import { AuthProvider } from "@/providers/auth-provider";
+import { LocaleProvider } from "@/providers/locale-provider";
+import { AnalyticsProvider } from "@/providers/analytics-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
@@ -33,11 +38,21 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} ${firaCode.variable} antialiased`}>
         <ThemeProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <SessionProvider>
+            <WalletProvider>
+              <AuthProvider>
+                <LocaleProvider>
+                  <AnalyticsProvider>
+                    <div className="flex min-h-screen flex-col">
+                      <Header />
+                      <main className="flex-1">{children}</main>
+                      <Footer />
+                    </div>
+                  </AnalyticsProvider>
+                </LocaleProvider>
+              </AuthProvider>
+            </WalletProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

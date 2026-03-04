@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Github,
@@ -14,6 +14,16 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useAuth } from "@/providers/auth-provider";
+import { useLocale } from "@/providers/locale-provider";
+import { xpService, credentialService, achievementService } from "@/services";
+import { xpProgress } from "@/types";
+import type {
+  Achievement as ServiceAchievement,
+  Credential as ServiceCredential,
+} from "@/types";
 import {
   userProfile,
   credentials,
@@ -394,11 +404,51 @@ const rarityGlow: Record<string, string> = {
 /* ── Page ── */
 
 export default function ProfilePage() {
+  const { publicKey, connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { user } = useAuth();
+  const { t } = useLocale();
+
+  const [xpBalance, setXpBalance] = useState<number | null>(null);
+  const [liveCredentials, setLiveCredentials] = useState<
+    ServiceCredential[] | null
+  >(null);
+  const [liveAchievements, setLiveAchievements] = useState<
+    ServiceAchievement[] | null
+  >(null);
+
+  useEffect(() => {
+    if (!connected || !publicKey) return;
+    const wallet = publicKey.toBase58();
+    Promise.all([
+      xpService.getBalance(wallet),
+      credentialService.getCredentials(wallet),
+      achievementService.getAchievements(wallet),
+    ]).then(([xp, creds, achieve]) => {
+      setXpBalance(xp);
+      setLiveCredentials(creds);
+      setLiveAchievements(achieve);
+    });
+  }, [connected, publicKey]);
+
   const [isPublic, setIsPublic] = useState(userProfile.isPublic);
   const completedCourses = getCompletedCourses();
   const xpPct = Math.round(
     (userStats.currentLevelXP / userStats.xpToNextLevel) * 100,
   );
+
+  const displayCredentials =
+    liveCredentials && liveCredentials.length > 0
+      ? liveCredentials
+      : credentials;
+  const displayAchievements =
+    liveAchievements && liveAchievements.length > 0
+      ? liveAchievements
+      : achievements;
+  const xpData = xpBalance !== null ? xpProgress(xpBalance) : null;
+  const displayLevel = xpData?.level ?? userStats.level;
+  const displayTotalXP = xpBalance ?? userStats.totalXP;
+  const displayXpPct = xpData ? Math.round(xpData.progress * 100) : xpPct;
 
   return (
     <div className="relative min-h-screen">
@@ -408,21 +458,21 @@ export default function ProfilePage() {
         {/* ── Profile Header ── */}
         <div className="flex flex-col sm:flex-row gap-5 items-start">
           <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold border border-primary/20">
-            {userProfile.initials}
+            {user?.initials ?? userProfile.initials}
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-3">
               <h1 className="text-2xl font-semibold tracking-tight">
-                {userProfile.name}
+                {user?.name ?? userProfile.name}
               </h1>
               <span className="text-sm text-muted-foreground/70">
-                @{userProfile.username}
+                @{user?.username ?? userProfile.username}
               </span>
             </div>
 
             <p className="mt-1.5 text-sm text-muted-foreground max-w-lg">
-              {userProfile.bio}
+              {user?.bio ?? userProfile.bio}
             </p>
 
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground/70">
@@ -430,9 +480,12 @@ export default function ProfilePage() {
                 <Clock className="size-3" />
                 Joined {userProfile.joinDate}
               </span>
-              {userProfile.socialLinks.github && (
+              {(user?.socialLinks?.github ??
+                userProfile.socialLinks.github) && (
                 <a
-                  href={userProfile.socialLinks.github}
+                  href={
+                    user?.socialLinks?.github ?? userProfile.socialLinks.github
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
@@ -441,9 +494,13 @@ export default function ProfilePage() {
                   GitHub
                 </a>
               )}
-              {userProfile.socialLinks.twitter && (
+              {(user?.socialLinks?.twitter ??
+                userProfile.socialLinks.twitter) && (
                 <a
-                  href={userProfile.socialLinks.twitter}
+                  href={
+                    user?.socialLinks?.twitter ??
+                    userProfile.socialLinks.twitter
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
@@ -452,9 +509,13 @@ export default function ProfilePage() {
                   Twitter
                 </a>
               )}
-              {userProfile.socialLinks.website && (
+              {(user?.socialLinks?.website ??
+                userProfile.socialLinks.website) && (
                 <a
-                  href={userProfile.socialLinks.website}
+                  href={
+                    user?.socialLinks?.website ??
+                    userProfile.socialLinks.website
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
@@ -482,17 +543,23 @@ export default function ProfilePage() {
               Level
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
-              {userStats.level}
+              {displayLevel}
             </p>
             <div className="mt-2.5 h-1.5 rounded-full bg-border/25">
               <div
                 className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${xpPct}%` }}
+                style={{ width: `${displayXpPct}%` }}
               />
             </div>
             <p className="mt-1.5 text-[10px] text-muted-foreground/60 tabular-nums">
-              {userStats.currentLevelXP.toLocaleString()} /{" "}
-              {userStats.xpToNextLevel.toLocaleString()} XP
+              {(
+                xpData?.currentLevelXp ?? userStats.currentLevelXP
+              ).toLocaleString()}{" "}
+              /{" "}
+              {(
+                xpData?.xpToNextLevel ?? userStats.xpToNextLevel
+              ).toLocaleString()}{" "}
+              XP
             </p>
           </div>
 
@@ -502,10 +569,10 @@ export default function ProfilePage() {
               Total XP
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
-              {userStats.totalXP.toLocaleString()}
+              {displayTotalXP.toLocaleString()}
             </p>
             <p className="mt-2.5 text-[10px] text-muted-foreground/60">
-              {credentials.length} credentials earned
+              {displayCredentials.length} credentials earned
             </p>
           </div>
 
@@ -531,8 +598,12 @@ export default function ProfilePage() {
           </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {credentials.map((cred, i) => (
-              <CredentialCard key={cred.id} credential={cred} index={i} />
+            {displayCredentials.map((cred, i) => (
+              <CredentialCard
+                key={cred.id}
+                credential={cred as Credential}
+                index={i}
+              />
             ))}
           </div>
         </div>
@@ -541,11 +612,11 @@ export default function ProfilePage() {
         <div className="mt-10">
           <h2 className="text-lg font-semibold">Achievements</h2>
           <p className="text-[11px] text-muted-foreground/60 mt-1">
-            {achievements.length} badges earned
+            {displayAchievements.length} badges earned
           </p>
 
           <div className="mt-5 grid grid-cols-4 sm:grid-cols-8 gap-x-3 gap-y-4">
-            {achievements.map((a, i) => (
+            {displayAchievements.map((a, i) => (
               <div key={a.id} className="group text-center">
                 <div
                   className={`relative mx-auto w-14 h-16 transition-transform duration-300 group-hover:scale-110 ${

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   User,
@@ -20,8 +21,10 @@ import {
   BellOff,
 } from "lucide-react";
 import { userProfile } from "@/data/profile";
-
-const MOCK_WALLET = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useAuth } from "@/providers/auth-provider";
+import { useLocale } from "@/providers/locale-provider";
+import { locales, localeNames } from "@/i18n/config";
 
 type Tab = "profile" | "account" | "preferences" | "privacy";
 
@@ -180,11 +183,17 @@ function ProfileSection({
 /* ── Section: Account ── */
 
 function AccountSection() {
+  const { publicKey } = useWallet();
+  const { user, linkGoogle, linkGithub, unlinkProvider } = useAuth();
   const [copied, setCopied] = useState(false);
-  const truncated = MOCK_WALLET.slice(0, 4) + "..." + MOCK_WALLET.slice(-4);
+  const walletAddress = publicKey?.toBase58() ?? "";
+  const truncated = walletAddress
+    ? walletAddress.slice(0, 4) + "..." + walletAddress.slice(-4)
+    : "Not connected";
 
   function handleCopy() {
-    navigator.clipboard.writeText(MOCK_WALLET);
+    if (!walletAddress) return;
+    navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -216,6 +225,7 @@ function AccountSection() {
       >
         <input
           type="email"
+          defaultValue={user?.email ?? ""}
           placeholder="Add your email"
           className="w-full rounded-lg border border-border/40 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground/40 transition-colors"
         />
@@ -227,9 +237,26 @@ function AccountSection() {
           <div className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5">
             <Github className="size-4 text-muted-foreground/60" />
             <span className="text-sm flex-1">GitHub</span>
-            <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-              Connected
-            </span>
+            {user?.githubId ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  Connected
+                </span>
+                <button
+                  onClick={() => unlinkProvider("github")}
+                  className="text-destructive/60 hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={linkGithub}
+                className="text-[10px] font-medium text-muted-foreground/70 border border-border/40 px-2 py-0.5 rounded-full hover:text-foreground transition-colors"
+              >
+                Connect
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5">
             <svg
@@ -243,9 +270,26 @@ function AccountSection() {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             <span className="text-sm flex-1">Google</span>
-            <button className="text-[10px] font-medium text-muted-foreground/70 border border-border/40 px-2 py-0.5 rounded-full hover:text-foreground transition-colors">
-              Connect
-            </button>
+            {user?.googleId ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  Connected
+                </span>
+                <button
+                  onClick={() => unlinkProvider("google")}
+                  className="text-destructive/60 hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={linkGoogle}
+                className="text-[10px] font-medium text-muted-foreground/70 border border-border/40 px-2 py-0.5 rounded-full hover:text-foreground transition-colors"
+              >
+                Connect
+              </button>
+            )}
           </div>
         </div>
       </FieldGroup>
@@ -291,14 +335,7 @@ function PreferencesSection() {
       </FieldGroup>
 
       {/* Language */}
-      <FieldGroup label="Language" description="More languages coming soon">
-        <div className="flex items-center gap-2 rounded-lg border border-border/40 px-3 py-2.5 w-fit">
-          <span className="text-sm">English</span>
-          <span className="text-[10px] text-muted-foreground/50 bg-muted/30 px-1.5 py-0.5 rounded">
-            Only
-          </span>
-        </div>
-      </FieldGroup>
+      <LanguageSelector />
 
       {/* Notifications */}
       <FieldGroup label="Notifications">
@@ -474,25 +511,86 @@ function NotificationRow({
   );
 }
 
+/* ── Language Selector ── */
+
+function LanguageSelector() {
+  const { locale, setLocale } = useLocale();
+
+  return (
+    <FieldGroup label="Language">
+      <div className="flex gap-0.5 rounded-lg bg-muted/30 p-1 w-fit">
+        {locales.map((loc) => (
+          <button
+            key={loc}
+            onClick={() => setLocale(loc)}
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              locale === loc
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {localeNames[loc]}
+          </button>
+        ))}
+      </div>
+    </FieldGroup>
+  );
+}
+
 /* ── Page ── */
 
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
+function SettingsPageInner() {
+  const searchParams = useSearchParams();
+  const initialTab = useMemo(() => {
+    const t = searchParams.get("tab");
+    return t === "account" || t === "preferences" || t === "privacy"
+      ? t
+      : "profile";
+  }, [searchParams]);
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [saved, setSaved] = useState(false);
+  const { user, updateProfile } = useAuth();
+  const { t } = useLocale();
+
   const [form, setForm] = useState({
-    name: userProfile.name,
-    username: userProfile.username,
-    bio: userProfile.bio,
-    github: userProfile.socialLinks.github || "",
-    twitter: userProfile.socialLinks.twitter || "",
-    website: userProfile.socialLinks.website || "",
+    name: user?.name ?? userProfile.name,
+    username: user?.username ?? userProfile.username,
+    bio: user?.bio ?? userProfile.bio,
+    github: user?.socialLinks?.github ?? userProfile.socialLinks.github ?? "",
+    twitter:
+      user?.socialLinks?.twitter ?? userProfile.socialLinks.twitter ?? "",
+    website:
+      user?.socialLinks?.website ?? userProfile.socialLinks.website ?? "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name,
+        username: user.username,
+        bio: user.bio ?? "",
+        github: user.socialLinks?.github ?? "",
+        twitter: user.socialLinks?.twitter ?? "",
+        website: user.socialLinks?.website ?? "",
+      });
+    }
+  }, [user]);
 
   function setField(key: string, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   function handleSave() {
+    updateProfile({
+      name: form.name,
+      username: form.username,
+      bio: form.bio,
+      socialLinks: {
+        github: form.github,
+        twitter: form.twitter,
+        website: form.website,
+      },
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -503,9 +601,11 @@ export default function SettingsPage() {
 
       <div className="relative z-10 mx-auto max-w-4xl px-6 pt-28 pb-20">
         {/* Header */}
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("settings.title")}
+        </h1>
         <p className="text-xs text-muted-foreground/60 mt-1">
-          Manage your account and preferences
+          {t("settings.profileTab")}
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-6">
@@ -546,5 +646,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsPageInner />
+    </Suspense>
   );
 }

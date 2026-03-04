@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   Code,
   ChevronLeft,
   ChevronRight,
+  Wallet,
 } from "lucide-react";
 import { CourseCard } from "@/components/course/course-card";
 import {
@@ -22,6 +23,17 @@ import {
   getNextLesson,
   type DayStatus,
 } from "@/data/dashboard";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useLocale } from "@/providers/locale-provider";
+import {
+  xpService,
+  streakService,
+  achievementService,
+  activityService,
+} from "@/services";
+import { xpProgress } from "@/types";
+import type { StreakData, Achievement, ActivityItem } from "@/types";
 
 /* ── Helpers ── */
 
@@ -216,9 +228,75 @@ function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
 export default function DashboardPage() {
   const enrolled = getEnrolledCourses();
   const recommended = getRecommendedCourses();
-  const xpPct = Math.round(
-    (userStats.currentLevelXP / userStats.xpToNextLevel) * 100,
-  );
+  const { publicKey, connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { t } = useLocale();
+
+  const [xpBalance, setXpBalance] = useState<number | null>(null);
+  const [liveStreak, setLiveStreak] = useState<StreakData | null>(null);
+  const [liveAchievements, setLiveAchievements] = useState<
+    Achievement[] | null
+  >(null);
+  const [liveActivity, setLiveActivity] = useState<ActivityItem[] | null>(null);
+
+  useEffect(() => {
+    if (!connected || !publicKey) return;
+    const wallet = publicKey.toBase58();
+    Promise.all([
+      xpService.getBalance(wallet),
+      streakService.getStreak(wallet),
+      achievementService.getAchievements(wallet),
+      activityService.getActivity(wallet),
+    ]).then(([xp, streak, achieve, activity]) => {
+      setXpBalance(xp);
+      setLiveStreak(streak);
+      setLiveAchievements(achieve);
+      setLiveActivity(activity);
+    });
+  }, [connected, publicKey]);
+
+  const xpData =
+    xpBalance !== null
+      ? xpProgress(xpBalance)
+      : {
+          level: userStats.level,
+          currentLevelXp: userStats.currentLevelXP,
+          xpToNextLevel: userStats.xpToNextLevel,
+          progress: userStats.currentLevelXP / userStats.xpToNextLevel,
+        };
+
+  const totalXP = xpBalance ?? userStats.totalXP;
+  const currentLevel = xpData.level;
+  const xpPct = Math.round(xpData.progress * 100);
+
+  const displayStreak = liveStreak ?? streakData;
+  const displayAchievements =
+    liveAchievements && liveAchievements.length > 0
+      ? liveAchievements
+      : achievements;
+  const displayActivity =
+    liveActivity && liveActivity.length > 0 ? liveActivity : activityFeed;
+
+  if (!connected) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="pointer-events-none absolute inset-0 bg-mesh animate-drift-2" />
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen gap-4">
+          <Wallet className="size-12 text-muted-foreground/40" />
+          <h2 className="text-lg font-semibold">{t("common.connectWallet")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("dashboard.noEnrolledCourses")}
+          </p>
+          <button
+            onClick={() => setVisible(true)}
+            className="mt-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            {t("common.connectWallet")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -227,13 +305,15 @@ export default function DashboardPage() {
       <div className="relative z-10 mx-auto max-w-4xl px-6 pt-28 pb-20">
         {/* ── Header ── */}
         <div className="flex items-end justify-between gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("dashboard.title")}
+          </h1>
           <div className="text-xs text-muted-foreground/70 tabular-nums">
-            Level {userStats.level}
+            {t("common.level")} {currentLevel}
             <span className="mx-1.5 text-muted-foreground/50">·</span>
-            {userStats.totalXP.toLocaleString()} XP
+            {totalXP.toLocaleString()} XP
             <span className="mx-1.5 text-muted-foreground/50">·</span>
-            Rank #{userStats.rank}
+            {t("common.rank")} #{userStats.rank}
           </div>
         </div>
 
@@ -247,10 +327,10 @@ export default function DashboardPage() {
               </p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold tabular-nums">
-                  {userStats.level}
+                  {currentLevel}
                 </span>
                 <span className="text-sm text-muted-foreground/60">
-                  → {userStats.level + 1}
+                  → {currentLevel + 1}
                 </span>
               </div>
               <div className="mt-3 h-1.5 rounded-full bg-border/25">
@@ -261,8 +341,8 @@ export default function DashboardPage() {
               </div>
               <div className="mt-2 flex justify-between text-[11px] text-muted-foreground/60 tabular-nums">
                 <span>
-                  {userStats.currentLevelXP.toLocaleString()} /{" "}
-                  {userStats.xpToNextLevel.toLocaleString()} XP
+                  {xpData.currentLevelXp.toLocaleString()} /{" "}
+                  {xpData.xpToNextLevel.toLocaleString()} XP
                 </span>
                 <span>{xpPct}%</span>
               </div>
@@ -276,10 +356,10 @@ export default function DashboardPage() {
             <div className="px-5 pb-5">
               <div className="border-t border-border/20 pt-4">
                 <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-medium">
-                  Achievements · {achievements.length}
+                  {t("common.achievements")} · {displayAchievements.length}
                 </p>
                 <div className="mt-3 grid grid-cols-4 gap-x-3 gap-y-4">
-                  {achievements.map((a, i) => {
+                  {displayAchievements.map((a, i) => {
                     const gradient: Record<string, string> = {
                       common:
                         "linear-gradient(160deg, #52525b, #a1a1aa, #52525b)",
@@ -361,22 +441,24 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <span className="absolute text-sm font-bold text-primary tabular-nums">
-                    {streakData.currentStreak}
+                    {displayStreak.currentStreak}
                   </span>
                 </div>
                 <div>
                   <p className="text-sm font-semibold leading-tight">
-                    {streakData.currentStreak} day streak!
+                    {displayStreak.currentStreak} {t("dashboard.days")}{" "}
+                    {t("common.streak").toLowerCase()}!
                   </p>
                   <p className="text-[11px] text-muted-foreground/60">
-                    Best: {streakData.longestStreak} days
+                    {t("dashboard.longestStreak")}:{" "}
+                    {displayStreak.longestStreak} {t("dashboard.days")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 rounded-md bg-blue-500/8 px-2 py-1">
                 <span className="text-xs">❄️</span>
                 <span className="text-[10px] text-blue-400/80 font-medium">
-                  {streakData.freezesRemaining}/{streakData.freezesTotal}
+                  {displayStreak.freezesRemaining}/{displayStreak.freezesTotal}
                 </span>
               </div>
             </div>
@@ -389,7 +471,9 @@ export default function DashboardPage() {
         {/* ── Continue Learning ── */}
         <div className="mt-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Continue Learning</h2>
+            <h2 className="text-lg font-semibold">
+              {t("dashboard.enrolledCourses")}
+            </h2>
             <Link
               href="/courses"
               className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
@@ -480,10 +564,12 @@ export default function DashboardPage() {
 
         {/* ── Activity ── */}
         <div className="mt-12">
-          <h2 className="text-lg font-semibold">Recent Activity</h2>
+          <h2 className="text-lg font-semibold">
+            {t("dashboard.recentActivity")}
+          </h2>
 
           <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/10">
-            {activityFeed.map((item) => (
+            {displayActivity.map((item) => (
               <div key={item.id} className="flex items-start gap-3 px-4 py-3">
                 <div
                   className={`mt-1.5 size-1.5 rounded-full shrink-0 ${activityDot[item.type] ?? "bg-muted-foreground/20"}`}

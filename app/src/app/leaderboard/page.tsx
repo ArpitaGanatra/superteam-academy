@@ -8,11 +8,15 @@ import {
   courseFilters,
   type TimeFilter,
 } from "@/data/leaderboard";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useLocale } from "@/providers/locale-provider";
 
 const medalEmoji = ["🥇", "🥈", "🥉"];
 const medalColors = ["#ca8a04", "#94a3b8", "#b45309"];
 
 export default function LeaderboardPage() {
+  const { publicKey } = useWallet();
+  const { t } = useLocale();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all-time");
   const [courseFilter, setCourseFilter] = useState("all");
   const [courseOpen, setCourseOpen] = useState(false);
@@ -44,9 +48,9 @@ export default function LeaderboardPage() {
   const reset = () => setPage(1);
 
   const times: { value: TimeFilter; label: string }[] = [
-    { value: "weekly", label: "Weekly" },
-    { value: "monthly", label: "Monthly" },
-    { value: "all-time", label: "All Time" },
+    { value: "weekly", label: t("leaderboard.weekly") },
+    { value: "monthly", label: t("leaderboard.monthly") },
+    { value: "all-time", label: t("leaderboard.allTime") },
   ];
 
   // top 3 reordered: 2nd | 1st | 3rd
@@ -68,27 +72,27 @@ export default function LeaderboardPage() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Leaderboard
+              {t("leaderboard.title")}
             </h1>
             <p className="text-xs text-muted-foreground/60 mt-1">
               {entries.length} learners
             </p>
           </div>
           <div className="flex gap-0.5 rounded-lg bg-muted/30 p-1">
-            {times.map((t) => (
+            {times.map((tf) => (
               <button
-                key={t.value}
+                key={tf.value}
                 onClick={() => {
-                  setTimeFilter(t.value);
+                  setTimeFilter(tf.value);
                   reset();
                 }}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  timeFilter === t.value
+                  timeFilter === tf.value
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t.label}
+                {tf.label}
               </button>
             ))}
           </div>
@@ -236,7 +240,7 @@ export default function LeaderboardPage() {
                 setQuery(e.target.value);
                 reset();
               }}
-              placeholder="Search..."
+              placeholder={t("leaderboard.searchPlaceholder")}
               className="w-full rounded-lg border border-border/40 bg-transparent pl-8 pr-3 py-2 text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-muted-foreground/40 transition-colors"
             />
           </div>
@@ -321,7 +325,7 @@ export default function LeaderboardPage() {
             ))
           ) : (
             <div className="py-12 text-center text-sm text-muted-foreground/70">
-              No results for &ldquo;{query}&rdquo;
+              {t("common.noResults")} &ldquo;{query}&rdquo;
             </div>
           )}
         </div>

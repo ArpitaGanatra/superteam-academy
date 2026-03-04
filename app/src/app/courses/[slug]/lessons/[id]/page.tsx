@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import confetti from "canvas-confetti";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowLeft,
   ArrowRight,
@@ -26,6 +29,7 @@ import {
   RotateCcw,
   Trophy,
   Sparkles,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +40,24 @@ import {
 } from "@/components/ui/resizable";
 import { getCourseBySlug } from "@/data/courses";
 import { getLessonContent, type TestCase } from "@/data/lesson-content";
+import { useLocale } from "@/providers/locale-provider";
+import {
+  progressService,
+  streakService,
+  activityService,
+  addXp,
+} from "@/services";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { events as analyticsEvents } from "@/lib/analytics";
+
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full bg-[#0c0c0e] text-muted-foreground text-xs">
+      Loading editor...
+    </div>
+  ),
+});
 
 /* ── Helpers ── */
 
@@ -45,70 +67,84 @@ function LessonTypeIcon({ type }: { type: "video" | "reading" | "challenge" }) {
   return <FileText className="size-3.5" />;
 }
 
-/* ── Simple Markdown Renderer ── */
+/* ── Markdown Renderer (react-markdown, no XSS) ── */
 
 function MarkdownRenderer({ content }: { content: string }) {
-  const html = useMemo(() => {
-    const result = content
-      .replace(
-        /```(\w*)\n([\s\S]*?)```/g,
-        (_, lang, code) =>
-          `<div class="my-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden"><div class="flex items-center gap-2 px-4 py-2 border-b border-border/50 text-[10px] font-mono text-muted-foreground uppercase tracking-wider">${lang || "code"}</div><pre class="p-4 overflow-x-auto text-[13px] leading-relaxed font-mono text-[#a1a1aa]"><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre></div>`,
-      )
-      .replace(
-        /\|(.+)\|\n\|[-|\s]+\|\n((?:\|.+\|\n?)*)/g,
-        (_, header, body) => {
-          const headers = header
-            .split("|")
-            .map((h: string) => h.trim())
-            .filter(Boolean);
-          const rows = body
-            .trim()
-            .split("\n")
-            .map((row: string) =>
-              row
-                .split("|")
-                .map((cell: string) => cell.trim())
-                .filter(Boolean),
-            );
-          return `<div class="my-4 overflow-x-auto"><table class="w-full text-sm"><thead><tr>${headers.map((h: string) => `<th class="text-left p-2 border-b border-border/50 text-muted-foreground font-medium">${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row: string[]) => `<tr>${row.map((cell: string) => `<td class="p-2 border-b border-border/30">${cell}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-        },
-      )
-      .replace(
-        /`([^`]+)`/g,
-        '<code class="rounded bg-muted px-1.5 py-0.5 text-[13px] font-mono text-primary">$1</code>',
-      )
-      .replace(
-        /^> (.+)$/gm,
-        '<blockquote class="my-4 border-l-2 border-primary/40 pl-4 text-muted-foreground italic">$1</blockquote>',
-      )
-      .replace(
-        /^### (.+)$/gm,
-        '<h3 class="mt-6 mb-2 text-base font-semibold tracking-tight">$1</h3>',
-      )
-      .replace(
-        /^## (.+)$/gm,
-        '<h2 class="mt-8 mb-3 text-xl font-semibold tracking-tight">$1</h2>',
-      )
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(
-        /^(\d+)\. (.+)$/gm,
-        '<li class="ml-4 list-decimal text-sm leading-relaxed mb-1">$2</li>',
-      )
-      .replace(
-        /^- (.+)$/gm,
-        '<li class="ml-4 list-disc text-sm leading-relaxed mb-1">$1</li>',
-      )
-      .replace(
-        /^(?!<[a-z]|$)(.+)$/gm,
-        '<p class="text-sm leading-relaxed text-foreground/90 mb-2">$1</p>',
-      );
-
-    return result;
-  }, [content]);
-
   return (
-    <div className="prose-custom" dangerouslySetInnerHTML={{ __html: html }} />
+    <div className="prose-custom">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h2: ({ children }) => (
+            <h2 className="mt-8 mb-3 text-xl font-semibold tracking-tight">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mt-6 mb-2 text-base font-semibold tracking-tight">
+              {children}
+            </h3>
+          ),
+          p: ({ children }) => (
+            <p className="text-sm leading-relaxed text-foreground/90 mb-2">
+              {children}
+            </p>
+          ),
+          strong: ({ children }) => <strong>{children}</strong>,
+          code: ({ children, className }) => {
+            const isBlock = className?.startsWith("language-");
+            if (isBlock) {
+              const lang = className?.replace("language-", "") || "code";
+              return (
+                <div className="my-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                    {lang}
+                  </div>
+                  <pre className="p-4 overflow-x-auto text-[13px] leading-relaxed font-mono text-[#a1a1aa]">
+                    <code>{children}</code>
+                  </pre>
+                </div>
+              );
+            }
+            return (
+              <code className="rounded bg-muted px-1.5 py-0.5 text-[13px] font-mono text-primary">
+                {children}
+              </code>
+            );
+          },
+          pre: ({ children }) => <>{children}</>,
+          blockquote: ({ children }) => (
+            <blockquote className="my-4 border-l-2 border-primary/40 pl-4 text-muted-foreground italic">
+              {children}
+            </blockquote>
+          ),
+          ul: ({ children }) => (
+            <ul className="ml-4 list-disc space-y-1">{children}</ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="ml-4 list-decimal space-y-1">{children}</ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-sm leading-relaxed mb-1">{children}</li>
+          ),
+          table: ({ children }) => (
+            <div className="my-4 overflow-x-auto">
+              <table className="w-full text-sm">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="text-left p-2 border-b border-border/50 text-muted-foreground font-medium">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="p-2 border-b border-border/30">{children}</td>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }
 
@@ -331,19 +367,25 @@ function ChallengeEditor({
 
       {/* Code editor area */}
       <div className="flex-1 relative min-h-0">
-        <div className="absolute left-0 top-0 bottom-0 w-10 border-r border-border/30 bg-[#0c0c0e] overflow-hidden pointer-events-none z-10">
-          <div className="pt-4 px-2 font-mono text-[11px] leading-[1.65] text-[#a1a1aa33] text-right">
-            {code.split("\n").map((_, i) => (
-              <div key={i}>{i + 1}</div>
-            ))}
-          </div>
-        </div>
-        <textarea
+        <MonacoEditor
+          height="100%"
+          language={language === "typescript" ? "typescript" : "rust"}
+          theme="vs-dark"
           value={code}
-          onChange={(e) => onChange(e.target.value)}
-          spellCheck={false}
-          className="absolute inset-0 w-full h-full resize-none bg-transparent pl-14 pr-4 pt-4 pb-4 font-mono text-[13px] leading-[1.65] text-[#a1a1aa] outline-none caret-primary"
-          style={{ tabSize: 2 }}
+          onChange={(value) => onChange(value ?? "")}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 13,
+            lineHeight: 1.65,
+            fontFamily: "var(--font-mono), monospace",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            wordWrap: "on",
+            padding: { top: 16 },
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: true,
+          }}
         />
       </div>
 
@@ -579,13 +621,64 @@ export default function LessonPage() {
 function LessonContent({ slug, id }: { slug: string; id: string }) {
   const course = getCourseBySlug(slug);
   const lessonContent = getLessonContent(slug, id);
+  const { publicKey } = useWallet();
+  const { t } = useLocale();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [expandedHints, setExpandedHints] = useState<Set<number>>(new Set());
-  const [editorCode, setEditorCode] = useState(
-    lessonContent?.starterCode || "",
-  );
+  const [autoSaved, setAutoSaved] = useState(false);
+
+  // Load saved code from localStorage or use starter code
+  const draftKey = `academy_draft_${slug}_${id}`;
+  const [editorCode, setEditorCode] = useState(() => {
+    if (typeof window === "undefined") return lessonContent?.starterCode || "";
+    return localStorage.getItem(draftKey) || lessonContent?.starterCode || "";
+  });
   const [completed, setCompleted] = useState(false);
+
+  // Auto-save code to localStorage
+  useEffect(() => {
+    if (!editorCode || typeof window === "undefined") return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(draftKey, editorCode);
+      setAutoSaved(true);
+      setTimeout(() => setAutoSaved(false), 1500);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [editorCode, draftKey]);
+
+  // Handle lesson completion with service layer
+  const handleComplete = useCallback(async () => {
+    if (completed) return;
+    setCompleted(true);
+
+    const wallet = publicKey?.toBase58();
+    if (!wallet) return;
+
+    try {
+      const allLessonsLocal = course?.modules.flatMap((m) => m.lessons) ?? [];
+      const lessonIdx = allLessonsLocal.findIndex((l) => l.id === id);
+
+      const { xpEarned } = await progressService.completeLesson(
+        wallet,
+        slug,
+        lessonIdx,
+      );
+      if (xpEarned > 0) addXp(wallet, xpEarned);
+
+      await streakService.recordActivity(wallet);
+      await activityService.recordActivity(wallet, {
+        type: "lesson_complete",
+        title: `Completed "${course?.title}" lesson`,
+        courseName: course?.title,
+        xp: xpEarned,
+      });
+
+      analyticsEvents.lessonCompleted(slug, lessonIdx);
+    } catch {
+      // Silently handle — lesson still marked complete in UI
+    }
+  }, [completed, publicKey, course, slug, id]);
 
   // Find lesson metadata from course
   const allLessons = course?.modules.flatMap((m) => m.lessons) ?? [];
@@ -685,6 +778,12 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {autoSaved && (
+            <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+              <Save className="size-3" />
+              {t("lesson.autoSaved")}
+            </span>
+          )}
           <span className="text-xs text-muted-foreground hidden sm:inline">
             {currentLesson.duration}
           </span>
@@ -827,7 +926,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                 testCases={lessonContent?.testCases ?? []}
                 accent={course.accent}
                 xpReward={xpPerLesson}
-                onComplete={() => setCompleted(true)}
+                onComplete={handleComplete}
               />
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -865,7 +964,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
         <Button
           size="sm"
           className="font-medium"
-          onClick={() => setCompleted(true)}
+          onClick={handleComplete}
           disabled={completed}
           style={
             completed ? undefined : { background: course.accent, color: "#000" }

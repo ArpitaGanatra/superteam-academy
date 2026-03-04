@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,11 +17,20 @@ import {
   Users,
   CheckCircle2,
   Lock,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCourseBySlug, type Module } from "@/data/courses";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useLocale } from "@/providers/locale-provider";
+import { progressService } from "@/services";
+import { events as analyticsEvents } from "@/lib/analytics";
+
+type EnrollmentStatus = "not-enrolled" | "enrolling" | "enrolled" | "completed";
 
 /* ── Lesson type icon ── */
 
@@ -135,6 +144,36 @@ function StarRating({ rating }: { rating: number }) {
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const course = getCourseBySlug(slug);
+  const { publicKey, connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { t } = useLocale();
+  const [enrollmentStatus, setEnrollmentStatus] =
+    useState<EnrollmentStatus>("not-enrolled");
+
+  useEffect(() => {
+    if (!connected || !publicKey || !course) {
+      setEnrollmentStatus("not-enrolled");
+      return;
+    }
+    const wallet = publicKey.toBase58();
+    progressService.getProgress(wallet, course.slug).then((p) => {
+      if (!p) setEnrollmentStatus("not-enrolled");
+      else if (p.completedAt) setEnrollmentStatus("completed");
+      else setEnrollmentStatus("enrolled");
+    });
+  }, [connected, publicKey, course]);
+
+  const handleEnroll = useCallback(async () => {
+    if (!connected) {
+      setVisible(true);
+      return;
+    }
+    if (!publicKey || !course || enrollmentStatus !== "not-enrolled") return;
+    setEnrollmentStatus("enrolling");
+    await progressService.enroll(publicKey.toBase58(), course.slug);
+    analyticsEvents.courseEnrolled(course.slug);
+    setEnrollmentStatus("enrolled");
+  }, [connected, publicKey, course, enrollmentStatus, setVisible]);
 
   if (!course) {
     return (
@@ -319,31 +358,61 @@ export default function CourseDetailPage() {
                 </div>
 
                 {/* CTA */}
-                <Button
-                  className="mt-5 w-full font-medium"
-                  size="lg"
-                  asChild
-                  style={{
-                    background: course.accent,
-                    color: "#000",
-                  }}
-                >
-                  <Link
-                    href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+                {enrollmentStatus === "completed" ? (
+                  <Button
+                    className="mt-5 w-full font-medium"
+                    size="lg"
+                    disabled
+                    style={{
+                      background: course.accent,
+                      color: "#000",
+                      opacity: 0.7,
+                    }}
                   >
-                    {progress > 0 ? (
-                      <>
-                        Continue Learning
-                        <ArrowRight className="size-4" />
-                      </>
-                    ) : (
-                      <>
-                        Start Course
-                        <ArrowRight className="size-4" />
-                      </>
-                    )}
-                  </Link>
-                </Button>
+                    <Check className="size-4" />
+                    {t("courses.completed")}
+                  </Button>
+                ) : enrollmentStatus === "enrolled" || progress > 0 ? (
+                  <Button
+                    className="mt-5 w-full font-medium"
+                    size="lg"
+                    asChild
+                    style={{ background: course.accent, color: "#000" }}
+                  >
+                    <Link
+                      href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+                    >
+                      {t("courses.continuelearning")}
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                ) : enrollmentStatus === "enrolling" ? (
+                  <Button
+                    className="mt-5 w-full font-medium"
+                    size="lg"
+                    disabled
+                    style={{
+                      background: course.accent,
+                      color: "#000",
+                      opacity: 0.7,
+                    }}
+                  >
+                    <Loader2 className="size-4 animate-spin" />
+                    {t("common.loading")}
+                  </Button>
+                ) : (
+                  <Button
+                    className="mt-5 w-full font-medium"
+                    size="lg"
+                    onClick={handleEnroll}
+                    style={{ background: course.accent, color: "#000" }}
+                  >
+                    {connected
+                      ? t("courses.enrollNow")
+                      : t("common.connectWallet")}
+                    <ArrowRight className="size-4" />
+                  </Button>
+                )}
 
                 {/* Instructor */}
                 <div className="mt-5 flex items-center gap-3 border-t border-border/50 pt-4">
@@ -441,22 +510,41 @@ export default function CourseDetailPage() {
 
         {/* ── Bottom CTA ── */}
         <div className="mt-14 text-center">
-          <Button
-            size="lg"
-            className="font-medium"
-            asChild
-            style={{
-              background: course.accent,
-              color: "#000",
-            }}
-          >
-            <Link
-              href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+          {enrollmentStatus === "enrolled" || progress > 0 ? (
+            <Button
+              size="lg"
+              className="font-medium"
+              asChild
+              style={{ background: course.accent, color: "#000" }}
             >
-              {progress > 0 ? "Continue Learning" : "Start Course"}
+              <Link
+                href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+              >
+                {t("courses.continuelearning")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          ) : enrollmentStatus === "completed" ? (
+            <Button
+              size="lg"
+              className="font-medium"
+              disabled
+              style={{ background: course.accent, color: "#000", opacity: 0.7 }}
+            >
+              <Check className="size-4" />
+              {t("courses.completed")}
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              className="font-medium"
+              onClick={handleEnroll}
+              style={{ background: course.accent, color: "#000" }}
+            >
+              {connected ? t("courses.enrollNow") : t("common.connectWallet")}
               <ArrowRight className="size-4" />
-            </Link>
-          </Button>
+            </Button>
+          )}
         </div>
       </div>
     </div>

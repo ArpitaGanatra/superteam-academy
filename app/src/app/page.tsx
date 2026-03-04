@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, GraduationCap, Globe, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +8,7 @@ import { LearningTracks } from "@/components/course/learning-tracks";
 import { SocialProof } from "@/components/course/social-proof";
 import { PlatformFeatures } from "@/components/course/platform-features";
 import { GlowButton } from "@/components/ui/glow-button";
+import { useLocale } from "@/providers/locale-provider";
 
 /* ── Data ── */
 
@@ -80,6 +83,8 @@ const codeLines = [
 ];
 
 export default function LandingPage() {
+  const { t } = useLocale();
+
   return (
     <div>
       {/* ── Hero ── */}
@@ -90,17 +95,16 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto max-w-3xl px-6 pt-24 text-center">
           <h1 className="animate-blur-in text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl">
-            Get ready to <br />
-            <span className="text-primary">Build on Solana</span>
+            {t("landing.heroTitle")} <br />
+            <span className="text-primary">{t("landing.heroHighlight")}</span>
           </h1>
 
           <p className="animate-blur-in delay-200 mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            No cost. No prerequisites. Interactive courses. Everything you need
-            to go from zero to shipping on mainnet.
+            {t("landing.heroSubtitle")}
           </p>
 
           <div className="animate-blur-in delay-300 mt-12 flex flex-wrap items-center justify-center gap-6">
-            <Button size="lg">Sign Up</Button>
+            <Button size="lg">{t("landing.signUp")}</Button>
             <GlowButton>
               <Button
                 variant="outline"
@@ -109,7 +113,7 @@ export default function LandingPage() {
                 className="relative bg-[#0a0a0c] dark:bg-[#0a0a0c] border-transparent"
               >
                 <Link href="/courses">
-                  Explore Courses
+                  {t("landing.exploreCourses")}
                   <ArrowRight />
                 </Link>
               </Button>
@@ -182,10 +186,10 @@ export default function LandingPage() {
         <div className="relative z-10 mx-auto max-w-5xl px-6">
           <div className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight">
-              How it works
+              {t("landing.howItWorks")}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Three steps. Zero friction. Start building in minutes.
+              {t("landing.howItWorksSubtitle")}
             </p>
           </div>
 
@@ -206,11 +210,10 @@ export default function LandingPage() {
                   <Globe className="relative z-10 size-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold tracking-tight">
-                  Connect wallet
+                  {t("landing.step1Title")}
                 </h3>
                 <p className="mx-auto mt-2 max-w-[220px] text-sm leading-relaxed text-muted-foreground">
-                  Link your Solana wallet. Your enrollment is recorded on-chain
-                  as a PDA.
+                  {t("landing.step1Description")}
                 </p>
                 {/* Mini wallet mockup */}
                 <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]">
@@ -294,11 +297,10 @@ export default function LandingPage() {
                   <Code className="relative z-10 size-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold tracking-tight">
-                  Complete lessons
+                  {t("landing.step2Title")}
                 </h3>
                 <p className="mx-auto mt-2 max-w-[220px] text-sm leading-relaxed text-muted-foreground">
-                  Work through interactive challenges. Each completion earns
-                  soulbound XP tokens.
+                  {t("landing.step2Description")}
                 </p>
                 {/* Mini editor mockup */}
                 <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]">
@@ -350,11 +352,10 @@ export default function LandingPage() {
                   <GraduationCap className="relative z-10 size-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold tracking-tight">
-                  Earn credentials
+                  {t("landing.step3Title")}
                 </h3>
                 <p className="mx-auto mt-2 max-w-[220px] text-sm leading-relaxed text-muted-foreground">
-                  Finish a track to mint an NFT certificate. Verifiable forever
-                  on Solana.
+                  {t("landing.step3Description")}
                 </p>
                 {/* Mini NFT certificate mockup */}
                 <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e] p-4">
@@ -391,15 +392,15 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto max-w-2xl px-6 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Ready to start building?
+            {t("landing.ctaTitle")}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            No cost. No prerequisites. Connect your wallet and go.
+            {t("landing.ctaSubtitle")}
           </p>
           <div className="mt-10">
             <Button size="lg" asChild>
               <Link href="/courses">
-                Explore courses
+                {t("landing.exploreCourses")}
                 <ArrowRight />
               </Link>
             </Button>
