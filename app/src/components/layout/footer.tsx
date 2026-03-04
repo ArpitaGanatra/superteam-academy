@@ -101,7 +101,7 @@ export function Footer() {
                   id="newsletter-email"
                   type="email"
                   placeholder="you@email.com"
-                  className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
                 <Button size="sm" type="submit">
                   {t("landing.footerSubscribe")}

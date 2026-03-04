@@ -288,9 +288,9 @@ export default function CourseCatalogPage() {
 
         {/* Learning Paths */}
         <div className="mt-10">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
             {t("courses.learningPaths")}
-          </h2>
+          </p>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {paths.map((path) => (
               <button
@@ -337,7 +337,7 @@ export default function CourseCatalogPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <BookOpen className="size-10 text-muted-foreground/60" />
+              <BookOpen className="size-10 text-muted-foreground" />
               <p className="mt-4 text-lg font-medium">
                 {t("courses.noCoursesFound")}
               </p>

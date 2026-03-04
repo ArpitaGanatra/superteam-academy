@@ -118,7 +118,7 @@ export default function LeaderboardPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               {t("leaderboard.title")}
             </h1>
-            <p className="text-xs text-muted-foreground/60 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {entries.length} {t("leaderboard.learners")}
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium">{me.name}</span>
-              <span className="text-xs text-muted-foreground/70 ml-2 hidden sm:inline">
+              <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">
                 @{me.username}
               </span>
             </div>
@@ -212,7 +212,7 @@ export default function LeaderboardPage() {
                     >
                       {entry.name}
                     </p>
-                    <p className="text-[10px] text-muted-foreground/70 truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       @{entry.username}
                     </p>
                     <p
@@ -221,11 +221,11 @@ export default function LeaderboardPage() {
                       }`}
                     >
                       {entry.xp.toLocaleString()}
-                      <span className="text-[10px] font-normal text-muted-foreground/70 ml-0.5">
+                      <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
                         XP
                       </span>
                     </p>
-                    <div className="mt-1 flex items-center justify-center gap-2 text-[10px] text-muted-foreground/60">
+                    <div className="mt-1 flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
                       <span>
                         {t("leaderboard.lvl")} {entry.level}
                       </span>
@@ -282,16 +282,17 @@ export default function LeaderboardPage() {
           <div className="flex-1" />
 
           <div className="relative w-48">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
               type="text"
+              aria-label={t("leaderboard.searchPlaceholder")}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
                 reset();
               }}
               placeholder={t("leaderboard.searchPlaceholder")}
-              className="w-full rounded-lg border border-border/40 bg-transparent pl-8 pr-3 py-2 text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-muted-foreground/40 transition-colors"
+              className="w-full rounded-lg border border-border/40 bg-transparent pl-8 pr-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground/40 transition-colors"
             />
           </div>
         </div>
@@ -299,7 +300,7 @@ export default function LeaderboardPage() {
         {/* ── Table ── */}
         <div className="mt-3 rounded-xl border border-border/30 overflow-hidden">
           {/* Column header */}
-          <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium border-b border-border/20">
+          <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-medium border-b border-border/20">
             <span className="w-10 text-right">#</span>
             <span className="flex-1 pl-11">
               {t("leaderboard.learnerColumn")}
@@ -331,7 +332,7 @@ export default function LeaderboardPage() {
                   }
                 >
                   <span
-                    className={entry.rank > 3 ? "text-muted-foreground/60" : ""}
+                    className={entry.rank > 3 ? "text-muted-foreground" : ""}
                   >
                     {entry.rank}
                   </span>
@@ -357,19 +358,19 @@ export default function LeaderboardPage() {
                         </span>
                       )}
                     </p>
-                    <p className="text-[10px] text-muted-foreground/60 truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       @{entry.username}
                     </p>
                   </div>
                 </div>
 
                 {/* Level */}
-                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground/70 hidden sm:block">
+                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground hidden sm:block">
                   {entry.level}
                 </span>
 
                 {/* Streak */}
-                <span className="w-14 text-right text-xs tabular-nums text-muted-foreground/70 hidden sm:block">
+                <span className="w-14 text-right text-xs tabular-nums text-muted-foreground hidden sm:block">
                   {entry.streak}d
                 </span>
 
@@ -380,7 +381,7 @@ export default function LeaderboardPage() {
               </div>
             ))
           ) : (
-            <div className="py-12 text-center text-sm text-muted-foreground/70">
+            <div className="py-12 text-center text-sm text-muted-foreground">
               {t("common.noResults")} &ldquo;{query}&rdquo;
             </div>
           )}
@@ -390,6 +391,7 @@ export default function LeaderboardPage() {
         {totalPages > 1 && (
           <div className="mt-4 flex items-center justify-center gap-0.5">
             <button
+              aria-label="Previous page"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={activePage <= 1}
               className="p-2 rounded-md text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
@@ -404,7 +406,7 @@ export default function LeaderboardPage() {
               .map((p, i, arr) => (
                 <span key={p} className="flex items-center">
                   {i > 0 && arr[i - 1]! < p - 1 && (
-                    <span className="text-xs text-muted-foreground/70 px-1">
+                    <span className="text-xs text-muted-foreground px-1">
                       ...
                     </span>
                   )}
@@ -413,7 +415,7 @@ export default function LeaderboardPage() {
                     className={`size-8 rounded-md text-xs font-medium transition-colors ${
                       p === activePage
                         ? "bg-foreground text-background"
-                        : "text-muted-foreground/70 hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {p}
@@ -421,6 +423,7 @@ export default function LeaderboardPage() {
                 </span>
               ))}
             <button
+              aria-label="Next page"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={activePage >= totalPages}
               className="p-2 rounded-md text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
@@ -430,7 +433,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        <p className="mt-8 text-center text-[11px] text-muted-foreground/60">
+        <p className="mt-8 text-center text-[11px] text-muted-foreground">
           {timeFilter === "weekly"
             ? t("leaderboard.resetsWeekly")
             : timeFilter === "monthly"
