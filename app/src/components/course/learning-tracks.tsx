@@ -101,10 +101,10 @@ export function LearningTracks() {
                     style={{ background: track.accent }}
                   />
                   {/* Code lines */}
-                  <div className="font-mono text-[11px] leading-[1.7] text-muted-foreground/40">
+                  <div className="font-mono text-[11px] leading-[1.7] text-[#a1a1aa66]">
                     {track.preview.map((line, i) => (
                       <div key={i} className="truncate">
-                        <span className="mr-3 inline-block w-3 text-right text-[10px] text-muted-foreground/20">
+                        <span className="mr-3 inline-block w-3 text-right text-[10px] text-[#a1a1aa33]">
                           {i + 1}
                         </span>
                         {line}
@@ -122,8 +122,7 @@ export function LearningTracks() {
                   >
                     <track.icon className="size-5" />
                   </div>
-                  {/* Fade to card */}
-                  <div className="absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-card/80 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#0c0c0e] to-transparent" />
                 </div>
 
                 {/* Card body */}
