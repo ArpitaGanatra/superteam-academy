@@ -343,14 +343,15 @@ function CredentialCard({
           >
             {credential.level}
           </span>
-          <span className="text-muted-foreground/50">·</span>
-          <span className="text-[10px] text-muted-foreground/60">
+          <span className="text-muted-foreground">·</span>
+          <span className="text-[10px] text-muted-foreground">
             {credential.earnedAt}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-muted-foreground/60">
+        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-muted-foreground">
           <span className="font-mono">{truncated}</span>
           <button
+            aria-label="Copy address"
             onClick={handleCopy}
             className="hover:text-foreground transition-colors"
           >
@@ -504,7 +505,7 @@ export default function ProfilePage() {
               <h1 className="text-2xl font-semibold tracking-tight">
                 {profileName}
               </h1>
-              <span className="text-sm text-muted-foreground/70">
+              <span className="text-sm text-muted-foreground">
                 @{profileUsername}
               </span>
             </div>
@@ -515,7 +516,7 @@ export default function ProfilePage() {
               </p>
             )}
 
-            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground/70">
+            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               {profileJoinDate && (
                 <span className="flex items-center gap-1">
                   <Clock className="size-3" />
@@ -560,7 +561,7 @@ export default function ProfilePage() {
 
           <Link
             href="/settings"
-            className="shrink-0 text-xs text-muted-foreground/70 hover:text-foreground border border-border/40 rounded-lg px-3 py-1.5 transition-colors"
+            className="shrink-0 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-lg px-3 py-1.5 transition-colors"
           >
             {t("profile.editProfile")}
           </Link>
@@ -570,7 +571,7 @@ export default function ProfilePage() {
         <div className="mt-6 grid grid-cols-3 gap-3">
           {/* Level */}
           <div className="rounded-xl border border-border/30 p-4">
-            <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
               {t("common.level")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
@@ -582,7 +583,7 @@ export default function ProfilePage() {
                 style={{ width: `${displayXpPct}%` }}
               />
             </div>
-            <p className="mt-1.5 text-[10px] text-muted-foreground/60 tabular-nums">
+            <p className="mt-1.5 text-[10px] text-muted-foreground tabular-nums">
               {(xpData?.currentLevelXp ?? 0).toLocaleString()} /{" "}
               {(xpData?.xpToNextLevel ?? 100).toLocaleString()} XP
             </p>
@@ -590,13 +591,13 @@ export default function ProfilePage() {
 
           {/* XP */}
           <div className="rounded-xl border border-border/30 p-4">
-            <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
               {t("profile.totalXp")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
               {displayTotalXP.toLocaleString()}
             </p>
-            <p className="mt-2.5 text-[10px] text-muted-foreground/60">
+            <p className="mt-2.5 text-[10px] text-muted-foreground">
               {t("profile.credentialsEarned", {
                 count: displayCredentials.length,
               })}
@@ -605,13 +606,13 @@ export default function ProfilePage() {
 
           {/* Rank */}
           <div className="rounded-xl border border-border/30 p-4">
-            <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
               {t("common.rank")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
               #{rank ?? "–"}
             </p>
-            <p className="mt-2.5 text-[10px] text-muted-foreground/60">
+            <p className="mt-2.5 text-[10px] text-muted-foreground">
               {totalLearners > 0 && (
                 <>
                   {t("common.of")} {totalLearners.toLocaleString()}{" "}
@@ -627,7 +628,7 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold">
             {t("profile.onChainCredentials")}
           </h2>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">
+          <p className="text-[11px] text-muted-foreground mt-1">
             {t("profile.onChainCredentialsDesc")}
           </p>
 
@@ -638,7 +639,7 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground/60">
+            <p className="mt-4 text-sm text-muted-foreground">
               {t("profile.noCredentials")}
             </p>
           )}
@@ -647,7 +648,7 @@ export default function ProfilePage() {
         {/* ── Achievement Showcase ── */}
         <div className="mt-10">
           <h2 className="text-lg font-semibold">{t("common.achievements")}</h2>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">
+          <p className="text-[11px] text-muted-foreground mt-1">
             {t("profile.badgesEarned", { count: displayAchievements.length })}
           </p>
 
@@ -686,7 +687,7 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground/60">
+            <p className="mt-4 text-sm text-muted-foreground">
               {t("dashboard.noAchievements")}
             </p>
           )}
@@ -743,7 +744,7 @@ export default function ProfilePage() {
                             }}
                           />
                         </div>
-                        <span className="text-[11px] text-muted-foreground/60">
+                        <span className="text-[11px] text-muted-foreground">
                           {t("dashboard.lessonsDetail", {
                             completed: course.completed,
                             total: course.lessons,
@@ -755,7 +756,7 @@ export default function ProfilePage() {
                       <span className="text-xs font-medium tabular-nums">
                         {course.xpEarned.toLocaleString()} XP
                       </span>
-                      <span className="text-[10px] text-muted-foreground/60">
+                      <span className="text-[10px] text-muted-foreground">
                         {course.completedAt === "In progress"
                           ? t("profile.inProgress")
                           : course.completedAt}
@@ -766,7 +767,7 @@ export default function ProfilePage() {
               })}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground/60">
+            <p className="mt-4 text-sm text-muted-foreground">
               {t("dashboard.noEnrolledCourses")}
             </p>
           )}
@@ -778,13 +779,13 @@ export default function ProfilePage() {
             {isPublic ? (
               <Unlock className="size-4 text-primary" />
             ) : (
-              <Lock className="size-4 text-muted-foreground/60" />
+              <Lock className="size-4 text-muted-foreground" />
             )}
             <div>
               <p className="text-sm font-medium">
                 {t("profile.profileVisibility")}
               </p>
-              <p className="text-[11px] text-muted-foreground/60">
+              <p className="text-[11px] text-muted-foreground">
                 {isPublic
                   ? t("profile.profileVisibleEveryone")
                   : t("profile.profileVisibleOnlyYou")}
@@ -792,6 +793,9 @@ export default function ProfilePage() {
             </div>
           </div>
           <button
+            role="switch"
+            aria-checked={isPublic}
+            aria-label="Toggle profile visibility"
             onClick={() => setIsPublic(!isPublic)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
               isPublic ? "bg-primary" : "bg-border"
