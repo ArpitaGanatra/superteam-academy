@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,17 +12,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { CourseCard } from "@/components/course/course-card";
-import {
-  userStats,
-  streakData,
-  monthlyActivity,
-  achievements,
-  activityFeed,
-  getEnrolledCourses,
-  getRecommendedCourses,
-  getNextLesson,
-  type DayStatus,
-} from "@/data/dashboard";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useLocale } from "@/providers/locale-provider";
@@ -31,9 +20,19 @@ import {
   streakService,
   achievementService,
   activityService,
+  progressService,
+  leaderboardService,
 } from "@/services";
+import { getAllCourses } from "@/lib/sanity-fetch";
 import { xpProgress } from "@/types";
-import type { StreakData, Achievement, ActivityItem } from "@/types";
+import type {
+  StreakData,
+  Achievement,
+  ActivityItem,
+  CourseDetail,
+  CourseProgress,
+  DayStatus,
+} from "@/types";
 
 /* ── Helpers ── */
 
@@ -93,7 +92,6 @@ function getMonthNames(locale: string): string[] {
 }
 
 function getDayHeaders(locale: string): string[] {
-  // Jan 1 2024 is Monday
   return Array.from({ length: 7 }, (_, i) =>
     new Intl.DateTimeFormat(locale, { weekday: "short" })
       .format(new Date(2024, 0, i + 1))
@@ -105,7 +103,7 @@ function getMonthGrid(year: number, month: number) {
   const first = new Date(year, month, 1);
   const days = new Date(year, month + 1, 0).getDate();
   let dow = first.getDay();
-  dow = dow === 0 ? 6 : dow - 1; // 0=Mon
+  dow = dow === 0 ? 6 : dow - 1;
 
   const weeks: (number | null)[][] = [];
   let week: (number | null)[] = Array.from<null>({ length: dow }).fill(null);
@@ -124,20 +122,37 @@ function getMonthGrid(year: number, month: number) {
   return weeks;
 }
 
-function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
+/** Convert streak history "YYYY-MM-DD" → grouped by "YYYY-MM" */
+function historyToMonthly(
+  history: Record<string, DayStatus>,
+): Record<string, Record<number, DayStatus>> {
+  const result: Record<string, Record<number, DayStatus>> = {};
+  for (const [dateStr, status] of Object.entries(history)) {
+    const month = dateStr.slice(0, 7);
+    const day = parseInt(dateStr.slice(8));
+    if (!result[month]) result[month] = {};
+    result[month][day] = status;
+  }
+  return result;
+}
+
+function StreakCalendar({
+  monthlyActivity,
+}: {
+  monthlyActivity: Record<string, Record<number, DayStatus>>;
+}) {
   const { locale } = useLocale();
   const MONTH_NAMES = getMonthNames(locale);
   const DAY_HEADERS = getDayHeaders(locale);
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth()); // 0-indexed
+  const [calMonth, setCalMonth] = useState(now.getMonth());
 
   const weeks = getMonthGrid(calYear, calMonth);
   const isCurrentMonth =
     calYear === now.getFullYear() && calMonth === now.getMonth();
   const todayDate = isCurrentMonth ? now.getDate() : -1;
 
-  // Get activity for displayed month
   const key = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
   const monthData = monthlyActivity[key] ?? {};
 
@@ -164,7 +179,6 @@ function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
 
   return (
     <div>
-      {/* Month nav */}
       <div className="flex items-center justify-between mb-3">
         <div>
           <span className="text-[10px] text-muted-foreground/60">
@@ -191,7 +205,6 @@ function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
         </div>
       </div>
 
-      {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_HEADERS.map((d) => (
           <div
@@ -203,7 +216,6 @@ function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-y-1">
         {weeks.flat().map((day, i) => {
           if (day === null)
@@ -264,8 +276,6 @@ function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
 /* ── Page ── */
 
 export default function DashboardPage() {
-  const enrolled = getEnrolledCourses();
-  const recommended = getRecommendedCourses();
   const { publicKey, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { t } = useLocale();
@@ -276,6 +286,10 @@ export default function DashboardPage() {
     Achievement[] | null
   >(null);
   const [liveActivity, setLiveActivity] = useState<ActivityItem[] | null>(null);
+  const [allCourses, setAllCourses] = useState<CourseDetail[]>([]);
+  const [enrollments, setEnrollments] = useState<CourseProgress[]>([]);
+  const [rank, setRank] = useState<number | null>(null);
+  const [totalLearners, setTotalLearners] = useState<number>(0);
 
   useEffect(() => {
     if (!connected || !publicKey) return;
@@ -285,35 +299,68 @@ export default function DashboardPage() {
       streakService.getStreak(wallet),
       achievementService.getAchievements(wallet),
       activityService.getActivity(wallet),
-    ]).then(([xp, streak, achieve, activity]) => {
+      progressService.getAllEnrollments(wallet),
+      leaderboardService.getRank(wallet),
+      leaderboardService.getEntries("all-time", undefined, 1, 1),
+      getAllCourses(),
+    ]).then(([xp, streak, achieve, activity, enroll, userRank, lb, courses]) => {
       setXpBalance(xp);
       setLiveStreak(streak);
       setLiveAchievements(achieve);
       setLiveActivity(activity);
+      setEnrollments(enroll);
+      setRank(userRank);
+      setTotalLearners(lb.total);
+      setAllCourses(courses);
     });
   }, [connected, publicKey]);
 
   const xpData =
     xpBalance !== null
       ? xpProgress(xpBalance)
-      : {
-          level: userStats.level,
-          currentLevelXp: userStats.currentLevelXP,
-          xpToNextLevel: userStats.xpToNextLevel,
-          progress: userStats.currentLevelXP / userStats.xpToNextLevel,
-        };
+      : { level: 0, currentLevelXp: 0, xpToNextLevel: 100, progress: 0 };
 
-  const totalXP = xpBalance ?? userStats.totalXP;
+  const totalXP = xpBalance ?? 0;
   const currentLevel = xpData.level;
   const xpPct = Math.round(xpData.progress * 100);
 
-  const displayStreak = liveStreak ?? streakData;
-  const displayAchievements =
-    liveAchievements && liveAchievements.length > 0
-      ? liveAchievements
-      : achievements;
-  const displayActivity =
-    liveActivity && liveActivity.length > 0 ? liveActivity : activityFeed;
+  const displayStreak: StreakData = liveStreak ?? {
+    currentStreak: 0,
+    longestStreak: 0,
+    freezesRemaining: 0,
+    freezesTotal: 3,
+    todayCompleted: false,
+    history: {},
+  };
+  const displayAchievements = liveAchievements ?? [];
+  const displayActivity = liveActivity ?? [];
+
+  // Enrolled courses: match progress to CMS courses
+  const enrolled = useMemo(() => {
+    return enrollments
+      .map((progress) => {
+        const course = allCourses.find((c) => c.slug === progress.courseId);
+        if (!course) return null;
+        return { ...course, completed: progress.completedLessons.length };
+      })
+      .filter((c): c is CourseDetail => c !== null);
+  }, [enrollments, allCourses]);
+
+  // Recommended: courses not enrolled in
+  const recommended = useMemo(() => {
+    const enrolledSlugs = new Set(enrollments.map((e) => e.courseId));
+    return allCourses.filter((c) => !enrolledSlugs.has(c.slug)).slice(0, 3);
+  }, [enrollments, allCourses]);
+
+  // Convert streak history for calendar
+  const calendarActivity = useMemo(() => {
+    return historyToMonthly(displayStreak.history ?? {});
+  }, [displayStreak]);
+
+  function getNextLesson(course: CourseDetail, completedCount: number) {
+    const allLessons = course.modules.flatMap((m) => m.lessons);
+    return allLessons[completedCount] ?? null;
+  }
 
   if (!connected) {
     return (
@@ -351,7 +398,7 @@ export default function DashboardPage() {
             <span className="mx-1.5 text-muted-foreground/50">·</span>
             {totalXP.toLocaleString()} XP
             <span className="mx-1.5 text-muted-foreground/50">·</span>
-            {t("common.rank")} #{userStats.rank}
+            {t("common.rank")} #{rank ?? "–"}
           </div>
         </div>
 
@@ -385,8 +432,13 @@ export default function DashboardPage() {
                 <span>{xpPct}%</span>
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground/60">
-                #{userStats.rank} of {userStats.totalLearners.toLocaleString()}{" "}
-                {t("common.learners")}
+                #{rank ?? "–"}{" "}
+                {totalLearners > 0 && (
+                  <>
+                    {t("common.of")} {totalLearners.toLocaleString()}{" "}
+                    {t("common.learners")}
+                  </>
+                )}
               </p>
             </div>
 
@@ -396,75 +448,78 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-medium">
                   {t("common.achievements")} · {displayAchievements.length}
                 </p>
-                <div className="mt-3 grid grid-cols-4 gap-x-3 gap-y-4">
-                  {displayAchievements.map((a, i) => {
-                    const gradient: Record<string, string> = {
-                      common:
-                        "linear-gradient(160deg, #52525b, #a1a1aa, #52525b)",
-                      rare: "linear-gradient(160deg, #1d4ed8, #60a5fa, #1d4ed8)",
-                      epic: "linear-gradient(160deg, #6d28d9, #a78bfa, #6d28d9)",
-                      legendary:
-                        "linear-gradient(160deg, #b45309, #fbbf24, #f59e0b, #b45309)",
-                    };
-                    const shineStrength: Record<string, number> = {
-                      common: 0.08,
-                      rare: 0.12,
-                      epic: 0.15,
-                      legendary: 0.25,
-                    };
-                    const glow: Record<string, string> = {
-                      common: "none",
-                      rare: "drop-shadow(0 0 6px rgba(59,130,246,0.2))",
-                      epic: "drop-shadow(0 0 6px rgba(139,92,246,0.25))",
-                      legendary: "drop-shadow(0 0 8px rgba(251,191,36,0.35))",
-                    };
-                    return (
-                      <div key={a.id} className="group text-center">
-                        <div
-                          className={`relative mx-auto w-14 h-16 transition-transform duration-300 group-hover:scale-110 ${
-                            a.rarity === "legendary"
-                              ? "animate-badge-float"
-                              : ""
-                          }`}
-                          style={{ filter: glow[a.rarity] }}
-                          title={`${a.title} — ${a.description}`}
-                        >
-                          {/* Gradient border */}
+                {displayAchievements.length > 0 ? (
+                  <div className="mt-3 grid grid-cols-4 gap-x-3 gap-y-4">
+                    {displayAchievements.map((a, i) => {
+                      const gradient: Record<string, string> = {
+                        common:
+                          "linear-gradient(160deg, #52525b, #a1a1aa, #52525b)",
+                        rare: "linear-gradient(160deg, #1d4ed8, #60a5fa, #1d4ed8)",
+                        epic: "linear-gradient(160deg, #6d28d9, #a78bfa, #6d28d9)",
+                        legendary:
+                          "linear-gradient(160deg, #b45309, #fbbf24, #f59e0b, #b45309)",
+                      };
+                      const shineStrength: Record<string, number> = {
+                        common: 0.08,
+                        rare: 0.12,
+                        epic: 0.15,
+                        legendary: 0.25,
+                      };
+                      const glow: Record<string, string> = {
+                        common: "none",
+                        rare: "drop-shadow(0 0 6px rgba(59,130,246,0.2))",
+                        epic: "drop-shadow(0 0 6px rgba(139,92,246,0.25))",
+                        legendary:
+                          "drop-shadow(0 0 8px rgba(251,191,36,0.35))",
+                      };
+                      return (
+                        <div key={a.id} className="group text-center">
                           <div
-                            className="absolute inset-0 badge-hex"
-                            style={{ background: gradient[a.rarity] }}
-                          />
-                          {/* Inner content */}
-                          <div className="absolute inset-0.5 badge-hex bg-card flex items-center justify-center">
-                            <span className="text-xl leading-none">
-                              {a.icon}
-                            </span>
-                          </div>
-                          {/* Shine sweep */}
-                          <div className="absolute inset-0 badge-hex pointer-events-none">
+                            className={`relative mx-auto w-14 h-16 transition-transform duration-300 group-hover:scale-110 ${
+                              a.rarity === "legendary"
+                                ? "animate-badge-float"
+                                : ""
+                            }`}
+                            style={{ filter: glow[a.rarity] }}
+                            title={`${a.title} — ${a.description}`}
+                          >
                             <div
-                              className="absolute top-0 h-full w-3/5"
-                              style={{
-                                background: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,${shineStrength[a.rarity]}) 50%, transparent 70%)`,
-                                animation: `badge-shine 4s ease-in-out ${i * 0.5}s infinite`,
-                              }}
+                              className="absolute inset-0 badge-hex"
+                              style={{ background: gradient[a.rarity] }}
                             />
+                            <div className="absolute inset-0.5 badge-hex bg-card flex items-center justify-center">
+                              <span className="text-xl leading-none">
+                                {a.icon}
+                              </span>
+                            </div>
+                            <div className="absolute inset-0 badge-hex pointer-events-none">
+                              <div
+                                className="absolute top-0 h-full w-3/5"
+                                style={{
+                                  background: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,${shineStrength[a.rarity]}) 50%, transparent 70%)`,
+                                  animation: `badge-shine 4s ease-in-out ${i * 0.5}s infinite`,
+                                }}
+                              />
+                            </div>
                           </div>
+                          <p className="mt-1.5 text-[9px] font-medium truncate leading-tight">
+                            {a.title}
+                          </p>
                         </div>
-                        <p className="mt-1.5 text-[9px] font-medium truncate leading-tight">
-                          {a.title}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-[11px] text-muted-foreground/60">
+                    {t("dashboard.noAchievements")}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Streak */}
           <div className="p-5 border-t sm:border-t-0 sm:border-l border-border/20">
-            {/* Flame + count */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="relative flex items-center justify-center">
@@ -501,8 +556,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Month calendar */}
-            <StreakCalendar activity={{}} />
+            <StreakCalendar monthlyActivity={calendarActivity} />
           </div>
         </div>
 
@@ -520,126 +574,150 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/15">
-            {enrolled.map((course) => {
-              const pct = Math.round((course.completed / course.lessons) * 100);
-              const next = getNextLesson(course.slug, course.completed);
+          {enrolled.length > 0 ? (
+            <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/15">
+              {enrolled.map((course) => {
+                const pct = Math.round(
+                  (course.completed / course.lessons) * 100,
+                );
+                const next = getNextLesson(course, course.completed);
 
-              return (
-                <div
-                  key={course.slug}
-                  className="p-4 hover:bg-muted/4 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                      style={{
-                        background: `${course.accent}10`,
-                        color: course.accent,
-                      }}
-                    >
-                      <course.icon className="size-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {t(`courseContent.${course.slug}.title`)}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                        {t("dashboard.lessonsDetail", {
-                          completed: course.completed,
-                          total: course.lessons,
-                        })}{" "}
-                        · {course.difficulty} · {course.duration}
-                      </p>
-                    </div>
-                    <span className="text-xs font-medium tabular-nums text-muted-foreground/70 shrink-0">
-                      {pct}%
-                    </span>
-                  </div>
-
-                  <div className="mt-3 h-1 rounded-full bg-border/20">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: course.accent }}
-                    />
-                  </div>
-
-                  {next && (
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5">
-                        <LessonIcon type={next.type} />
-                        {t("common.next")}: {next.title}
-                      </span>
-                      <Link
-                        href={`/courses/${course.slug}/lessons/${next.id}`}
-                        className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                return (
+                  <div
+                    key={course.slug}
+                    className="p-4 hover:bg-muted/4 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                          background: `${course.accent}10`,
+                          color: course.accent,
+                        }}
                       >
-                        {t("common.continue")} <ArrowRight className="size-3" />
-                      </Link>
+                        <course.icon className="size-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {course.title}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                          {t("dashboard.lessonsDetail", {
+                            completed: course.completed,
+                            total: course.lessons,
+                          })}{" "}
+                          · {course.difficulty} · {course.duration}
+                        </p>
+                      </div>
+                      <span className="text-xs font-medium tabular-nums text-muted-foreground/70 shrink-0">
+                        {pct}%
+                      </span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+                    <div className="mt-3 h-1 rounded-full bg-border/20">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, background: course.accent }}
+                      />
+                    </div>
+
+                    {next && (
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5">
+                          <LessonIcon type={next.type} />
+                          {t("common.next")}: {next.title}
+                        </span>
+                        <Link
+                          href={`/courses/${course.slug}/lessons/${next.id}`}
+                          className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                        >
+                          {t("common.continue")}{" "}
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-border/30 p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("dashboard.noEnrolledCourses")}
+              </p>
+              <Link
+                href="/courses"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                {t("dashboard.allCourses")} <ArrowRight className="size-3" />
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* ── Recommended ── */}
-        <div className="mt-12">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
-              {t("dashboard.recommended")}
-            </h2>
-            <Link
-              href="/courses"
-              className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              {t("common.browseAll")} <ArrowRight className="size-3" />
-            </Link>
-          </div>
+        {recommended.length > 0 && (
+          <div className="mt-12">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {t("dashboard.recommended")}
+              </h2>
+              <Link
+                href="/courses"
+                className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
+              >
+                {t("common.browseAll")} <ArrowRight className="size-3" />
+              </Link>
+            </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recommended.map((course) => (
-              <CourseCard key={course.slug} course={course} />
-            ))}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {recommended.map((course) => (
+                <CourseCard key={course.slug} course={course} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Activity ── */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold">
-            {t("dashboard.recentActivity")}
-          </h2>
+        {displayActivity.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-lg font-semibold">
+              {t("dashboard.recentActivity")}
+            </h2>
 
-          <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/10">
-            {displayActivity.map((item) => {
-              const translated = translateActivity(item, t);
-              return (
-                <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+            <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/10">
+              {displayActivity.map((item) => {
+                const translated = translateActivity(item, t);
+                return (
                   <div
-                    className={`mt-1.5 size-1.5 rounded-full shrink-0 ${activityDot[item.type] ?? "bg-muted-foreground/20"}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm">{translated.title}</p>
-                    {translated.courseName && (
-                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                        {translated.courseName}
-                      </p>
-                    )}
+                    key={item.id}
+                    className="flex items-start gap-3 px-4 py-3"
+                  >
+                    <div
+                      className={`mt-1.5 size-1.5 rounded-full shrink-0 ${activityDot[item.type] ?? "bg-muted-foreground/20"}`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{translated.title}</p>
+                      {translated.courseName && (
+                        <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                          {translated.courseName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground/60">
+                      {item.xp && (
+                        <span className="text-primary font-medium">
+                          +{item.xp} XP
+                        </span>
+                      )}
+                      <span>{translated.timestamp}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground/60">
-                    {item.xp && (
-                      <span className="text-primary font-medium">
-                        +{item.xp} XP
-                      </span>
-                    )}
-                    <span>{translated.timestamp}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
