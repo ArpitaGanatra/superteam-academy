@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Flame, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +11,24 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import type { CourseDetail } from "@/data/courses";
+import { useLocale } from "@/providers/locale-provider";
+
+const difficultyKeys: Record<string, string> = {
+  Beginner: "courses.beginner",
+  Intermediate: "courses.intermediate",
+  Advanced: "courses.advanced",
+};
+
+const topicKeys: Record<string, string> = {
+  CORE: "courses.topicCore",
+  FRAMEWORK: "courses.topicFramework",
+  SECURITY: "courses.topicSecurity",
+  DEFI: "courses.topicDeFi",
+};
 
 export function CourseCard({ course }: { course: CourseDetail }) {
+  const { t } = useLocale();
+
   const progress =
     course.completed > 0
       ? Math.round((course.completed / course.lessons) * 100)
@@ -55,17 +73,17 @@ export function CourseCard({ course }: { course: CourseDetail }) {
               className="text-[10px] font-bold uppercase tracking-widest"
               style={{ color: course.accent }}
             >
-              {course.topicLabel}
+              {t(topicKeys[course.topicLabel] ?? "courses.topicCore")}
             </span>
             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {course.difficulty}
+              {t(difficultyKeys[course.difficulty] ?? "courses.beginner")}
             </Badge>
           </div>
           <CardTitle className="mt-1.5 text-base tracking-tight">
-            {course.title}
+            {t(`courseContent.${course.slug}.title`)}
           </CardTitle>
           <CardDescription className="text-sm leading-relaxed line-clamp-2">
-            {course.description}
+            {t(`courseContent.${course.slug}.description`)}
           </CardDescription>
         </CardHeader>
 
@@ -75,7 +93,7 @@ export function CourseCard({ course }: { course: CourseDetail }) {
               <Clock className="size-3" />
               {course.duration}
             </span>
-            <span>{course.lessons} lessons</span>
+            <span>{t("courses.lessonsCount", { count: course.lessons })}</span>
             <span className="ml-auto flex items-center gap-1">
               <Flame className="size-3 text-xp" />
               {course.xp} XP
@@ -94,7 +112,10 @@ export function CourseCard({ course }: { course: CourseDetail }) {
           </div>
           {progress > 0 && (
             <p className="mt-1.5 text-[10px] text-muted-foreground">
-              {course.completed}/{course.lessons} completed
+              {t("courses.completedProgress", {
+                completed: course.completed,
+                total: course.lessons,
+              })}
             </p>
           )}
 
@@ -102,7 +123,7 @@ export function CourseCard({ course }: { course: CourseDetail }) {
             className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100"
             style={{ color: course.accent }}
           >
-            View course <ArrowRight className="size-3.5" />
+            {t("courses.viewCourse")} <ArrowRight className="size-3.5" />
           </div>
         </CardContent>
       </Card>

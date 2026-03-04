@@ -56,6 +56,7 @@ function ModuleSection({
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const { t } = useLocale();
   const completedCount = module.lessons.filter((l) => l.completed).length;
   const totalDuration = module.lessons.reduce((acc, l) => {
     const mins = parseInt(l.duration);
@@ -78,10 +79,14 @@ function ModuleSection({
           {index + 1}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-sm truncate">{module.title}</p>
+          <p className="font-medium text-sm truncate">
+            {t(`courseContent.${courseSlug}.${module.id}`)}
+          </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {module.lessons.length} lessons · {totalDuration} min
-            {completedCount > 0 && ` · ${completedCount} completed`}
+            {module.lessons.length} {t("common.lessons")} · {totalDuration}{" "}
+            {t("lesson.min")}
+            {completedCount > 0 &&
+              ` · ${completedCount} ${t("common.completed")}`}
           </p>
         </div>
         {completedCount === module.lessons.length &&
@@ -112,7 +117,9 @@ function ModuleSection({
                 )}
               </div>
               <LessonIcon type={lesson.type} />
-              <span className="flex-1 text-sm truncate">{lesson.title}</span>
+              <span className="flex-1 text-sm truncate">
+                {t(`courseContent.${courseSlug}.${lesson.id}`)}
+              </span>
               <span className="text-xs text-muted-foreground shrink-0">
                 {lesson.duration}
               </span>
@@ -180,14 +187,16 @@ export default function CourseDetailPage() {
       <div className="relative min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="size-12 text-muted-foreground/60 mx-auto" />
-          <h1 className="mt-4 text-xl font-semibold">Course not found</h1>
+          <h1 className="mt-4 text-xl font-semibold">
+            {t("courses.courseNotFound")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            This course doesn&apos;t exist or has been removed.
+            {t("courses.courseNotFoundDesc")}
           </p>
           <Button variant="outline" size="sm" className="mt-4" asChild>
             <Link href="/courses">
               <ArrowLeft className="size-3.5" />
-              Back to courses
+              {t("courses.backToCourses")}
             </Link>
           </Button>
         </div>
@@ -222,10 +231,12 @@ export default function CourseDetailPage() {
             href="/courses"
             className="hover:text-foreground transition-colors"
           >
-            Courses
+            {t("common.courses")}
           </Link>
           <span>/</span>
-          <span className="text-foreground truncate">{course.title}</span>
+          <span className="text-foreground truncate">
+            {t(`courseContent.${course.slug}.title`)}
+          </span>
         </div>
 
         {/* ── Course Header ── */}
@@ -237,19 +248,19 @@ export default function CourseDetailPage() {
                 className="text-[10px] font-bold uppercase tracking-widest"
                 style={{ color: course.accent }}
               >
-                {course.topicLabel}
+                {t(`courses.topic${course.topic}`)}
               </span>
               <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                {course.difficulty}
+                {t(`courses.${course.difficulty.toLowerCase()}`)}
               </Badge>
             </div>
 
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              {course.title}
+              {t(`courseContent.${course.slug}.title`)}
             </h1>
 
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-2xl">
-              {course.longDescription}
+              {t(`courseContent.${course.slug}.longDescription`)}
             </p>
 
             {/* Meta row */}
@@ -260,7 +271,7 @@ export default function CourseDetailPage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <BookOpen className="size-4" />
-                {course.lessons} lessons
+                {course.lessons} {t("common.lessons")}
               </span>
               <span className="flex items-center gap-1.5">
                 <Flame className="size-4 text-xp" />
@@ -306,13 +317,15 @@ export default function CourseDetailPage() {
           <div className="lg:sticky lg:top-24 h-fit">
             <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
               <CardHeader className="p-5 pb-0">
-                <CardTitle className="text-lg">Course Progress</CardTitle>
+                <CardTitle className="text-lg">
+                  {t("courses.courseProgress")}
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-5">
                 {/* Progress bar */}
                 <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {course.completed}/{course.lessons} lessons
+                    {course.completed}/{course.lessons} {t("common.lessons")}
                   </span>
                   <span>{progress}%</span>
                 </div>
@@ -330,12 +343,14 @@ export default function CourseDetailPage() {
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
                     <p className="text-xl font-semibold">{totalModules}</p>
-                    <p className="text-[11px] text-muted-foreground">Modules</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("common.modules")}
+                    </p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
                     <p className="text-xl font-semibold">{completedModules}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Completed
+                      {t("common.completed")}
                     </p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
@@ -346,13 +361,13 @@ export default function CourseDetailPage() {
                       {course.xp}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      XP to earn
+                      {t("courses.xpToEarn")}
                     </p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
                     <p className="text-xl font-semibold">{course.duration}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Duration
+                      {t("common.duration")}
                     </p>
                   </div>
                 </div>
@@ -444,10 +459,12 @@ export default function CourseDetailPage() {
 
         {/* ── Curriculum ── */}
         <div className="mt-14">
-          <h2 className="text-xl font-semibold tracking-tight">Curriculum</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            {t("courses.curriculum")}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {totalModules} modules · {course.lessons} lessons ·{" "}
-            {course.duration} total
+            {totalModules} {t("common.modules")} · {course.lessons}{" "}
+            {t("common.lessons")} · {course.duration} {t("common.total")}
           </p>
 
           <div className="mt-6 space-y-3">
@@ -468,10 +485,10 @@ export default function CourseDetailPage() {
         {course.reviews.length > 0 && (
           <div className="mt-14">
             <h2 className="text-xl font-semibold tracking-tight">
-              Student Reviews
+              {t("courses.studentReviews")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              What learners are saying about this course
+              {t("courses.reviewsSubtitle")}
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -499,7 +516,7 @@ export default function CourseDetailPage() {
                       <StarRating rating={review.rating} />
                     </div>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                      &ldquo;{review.text}&rdquo;
+                      &ldquo;{t(`courseContent.${course.slug}.r${i}`)}&rdquo;
                     </p>
                   </CardContent>
                 </Card>

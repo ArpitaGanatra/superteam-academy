@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
               {t("leaderboard.title")}
             </h1>
             <p className="text-xs text-muted-foreground/60 mt-1">
-              {entries.length} learners
+              {entries.length} {t("leaderboard.learners")}
             </p>
           </div>
           <div className="flex gap-0.5 rounded-lg bg-muted/30 p-1">
@@ -117,8 +117,12 @@ export default function LeaderboardPage() {
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-              <span className="hidden sm:inline">Lvl {me.level}</span>
-              <span className="hidden sm:inline">{me.streak}d streak</span>
+              <span className="hidden sm:inline">
+                {t("leaderboard.lvl")} {me.level}
+              </span>
+              <span className="hidden sm:inline">
+                {me.streak}d {t("common.streak").toLowerCase()}
+              </span>
               <span className="font-semibold text-foreground tabular-nums">
                 {me.xp.toLocaleString()} XP
               </span>
@@ -178,7 +182,9 @@ export default function LeaderboardPage() {
                       </span>
                     </p>
                     <div className="mt-1 flex items-center justify-center gap-2 text-[10px] text-muted-foreground/60">
-                      <span>Lvl {entry.level}</span>
+                      <span>
+                        {t("leaderboard.lvl")} {entry.level}
+                      </span>
                       <span>·</span>
                       <span>{entry.streak}d</span>
                     </div>
@@ -251,9 +257,15 @@ export default function LeaderboardPage() {
           {/* Column header */}
           <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium border-b border-border/20">
             <span className="w-10 text-right">#</span>
-            <span className="flex-1 pl-11">Learner</span>
-            <span className="w-10 text-right hidden sm:block">Lvl</span>
-            <span className="w-14 text-right hidden sm:block">Streak</span>
+            <span className="flex-1 pl-11">
+              {t("leaderboard.learnerColumn")}
+            </span>
+            <span className="w-10 text-right hidden sm:block">
+              {t("leaderboard.lvl")}
+            </span>
+            <span className="w-14 text-right hidden sm:block">
+              {t("leaderboard.streakColumn")}
+            </span>
             <span className="w-16 text-right">XP</span>
           </div>
 
@@ -297,7 +309,7 @@ export default function LeaderboardPage() {
                       <span className="font-medium">{entry.name}</span>
                       {entry.isCurrentUser && (
                         <span className="ml-1.5 text-[9px] text-primary font-semibold uppercase">
-                          you
+                          {t("common.you")}
                         </span>
                       )}
                     </p>
@@ -376,10 +388,10 @@ export default function LeaderboardPage() {
 
         <p className="mt-8 text-center text-[11px] text-muted-foreground/60">
           {timeFilter === "weekly"
-            ? "Resets every Monday"
+            ? t("leaderboard.resetsWeekly")
             : timeFilter === "monthly"
-              ? "Resets 1st of each month"
-              : "All-time rankings"}
+              ? t("leaderboard.resetsMonthly")
+              : t("leaderboard.allTimeRankings")}
         </p>
       </div>
     </div>

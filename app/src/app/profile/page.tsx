@@ -326,6 +326,7 @@ function CredentialCard({
   credential: Credential;
   index: number;
 }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   const truncated =
     credential.mintAddress.slice(0, 4) +
@@ -370,7 +371,7 @@ function CredentialCard({
           <span className="flex-1" />
           <button className="hover:text-foreground transition-colors flex items-center gap-0.5">
             <ExternalLink className="size-2.5" />
-            Verify
+            {t("common.verify")}
           </button>
         </div>
       </div>
@@ -478,7 +479,7 @@ export default function ProfilePage() {
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground/70">
               <span className="flex items-center gap-1">
                 <Clock className="size-3" />
-                Joined {userProfile.joinDate}
+                {t("profile.joined")} {userProfile.joinDate}
               </span>
               {(user?.socialLinks?.github ??
                 userProfile.socialLinks.github) && (
@@ -521,7 +522,7 @@ export default function ProfilePage() {
                   className="flex items-center gap-1 hover:text-foreground transition-colors"
                 >
                   <Globe className="size-3" />
-                  Website
+                  {t("common.website")}
                 </a>
               )}
             </div>
@@ -531,7 +532,7 @@ export default function ProfilePage() {
             href="/settings"
             className="shrink-0 text-xs text-muted-foreground/70 hover:text-foreground border border-border/40 rounded-lg px-3 py-1.5 transition-colors"
           >
-            Edit Profile
+            {t("profile.editProfile")}
           </Link>
         </div>
 
@@ -540,7 +541,7 @@ export default function ProfilePage() {
           {/* Level */}
           <div className="rounded-xl border border-border/30 p-4">
             <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
-              Level
+              {t("common.level")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
               {displayLevel}
@@ -566,35 +567,40 @@ export default function ProfilePage() {
           {/* XP */}
           <div className="rounded-xl border border-border/30 p-4">
             <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
-              Total XP
+              {t("profile.totalXp")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
               {displayTotalXP.toLocaleString()}
             </p>
             <p className="mt-2.5 text-[10px] text-muted-foreground/60">
-              {displayCredentials.length} credentials earned
+              {t("profile.credentialsEarned", {
+                count: displayCredentials.length,
+              })}
             </p>
           </div>
 
           {/* Rank */}
           <div className="rounded-xl border border-border/30 p-4">
             <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
-              Rank
+              {t("common.rank")}
             </p>
             <p className="mt-1 text-3xl font-bold tabular-nums">
               #{userStats.rank}
             </p>
             <p className="mt-2.5 text-[10px] text-muted-foreground/60">
-              of {userStats.totalLearners.toLocaleString()} learners
+              {t("common.of")} {userStats.totalLearners.toLocaleString()}{" "}
+              {t("common.learners")}
             </p>
           </div>
         </div>
 
         {/* ── On-Chain Credentials ── */}
         <div className="mt-10">
-          <h2 className="text-lg font-semibold">On-Chain Credentials</h2>
+          <h2 className="text-lg font-semibold">
+            {t("profile.onChainCredentials")}
+          </h2>
           <p className="text-[11px] text-muted-foreground/60 mt-1">
-            Soulbound NFTs verifying your expertise
+            {t("profile.onChainCredentialsDesc")}
           </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -610,9 +616,9 @@ export default function ProfilePage() {
 
         {/* ── Achievement Showcase ── */}
         <div className="mt-10">
-          <h2 className="text-lg font-semibold">Achievements</h2>
+          <h2 className="text-lg font-semibold">{t("common.achievements")}</h2>
           <p className="text-[11px] text-muted-foreground/60 mt-1">
-            {displayAchievements.length} badges earned
+            {t("profile.badgesEarned", { count: displayAchievements.length })}
           </p>
 
           <div className="mt-5 grid grid-cols-4 sm:grid-cols-8 gap-x-3 gap-y-4">
@@ -652,7 +658,9 @@ export default function ProfilePage() {
 
         {/* ── Completed Courses ── */}
         <div className="mt-10">
-          <h2 className="text-lg font-semibold">Completed Courses</h2>
+          <h2 className="text-lg font-semibold">
+            {t("profile.completedCourses")}
+          </h2>
 
           <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/15">
             {completedCourses.map((course) => {
@@ -679,7 +687,7 @@ export default function ProfilePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">
-                        {course.title}
+                        {t(`courseContent.${course.slug}.title`)}
                       </p>
                       {isFinished && (
                         <CheckCircle2
@@ -699,7 +707,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       <span className="text-[11px] text-muted-foreground/60">
-                        {course.completed}/{course.lessons} lessons
+                        {t("dashboard.lessonsDetail", { completed: course.completed, total: course.lessons })}
                       </span>
                     </div>
                   </div>
@@ -708,7 +716,7 @@ export default function ProfilePage() {
                       {course.xpEarned.toLocaleString()} XP
                     </span>
                     <span className="text-[10px] text-muted-foreground/60">
-                      {course.completedAt}
+                      {course.completedAt === "In progress" ? t("profile.inProgress") : course.completedAt}
                     </span>
                   </div>
                 </Link>
@@ -726,11 +734,13 @@ export default function ProfilePage() {
               <Lock className="size-4 text-muted-foreground/60" />
             )}
             <div>
-              <p className="text-sm font-medium">Profile Visibility</p>
+              <p className="text-sm font-medium">
+                {t("profile.profileVisibility")}
+              </p>
               <p className="text-[11px] text-muted-foreground/60">
                 {isPublic
-                  ? "Your profile is visible to everyone"
-                  : "Only you can see your profile"}
+                  ? t("profile.profileVisibleEveryone")
+                  : t("profile.profileVisibleOnlyYou")}
               </p>
             </div>
           </div>

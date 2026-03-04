@@ -1,7 +1,12 @@
+"use client";
+
 import { Code, Zap, Shield, Trophy } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useLocale } from "@/providers/locale-provider";
 
 export function PlatformFeatures() {
+  const { t } = useLocale();
+
   return (
     <section className="relative py-28">
       <div className="absolute inset-0 bg-mesh animate-drift-2" />
@@ -9,10 +14,10 @@ export function PlatformFeatures() {
       <div className="relative z-10 mx-auto max-w-5xl px-6">
         <div className="text-center">
           <h2 className="text-3xl font-semibold tracking-tight">
-            Built different
+            {t("landing.builtDifferent")}
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Not another video course. Your progress lives on-chain.
+            {t("landing.builtDifferentSubtitle")}
           </p>
         </div>
 
@@ -24,12 +29,11 @@ export function PlatformFeatures() {
               <div className="flex items-center gap-2">
                 <Code className="size-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Interactive Learning with Challenges
+                  {t("landing.featureInteractiveTitle")}
                 </h3>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-sm">
-                Learn by doing. Each course has a series of challenges to test
-                your knowledge with real compiler feedback.
+                {t("landing.featureInteractiveDesc")}
               </p>
             </div>
             {/* Mini editor mockup */}
@@ -73,7 +77,7 @@ export function PlatformFeatures() {
               {/* Status bar */}
               <div className="flex items-center justify-between border-t border-border/30 px-3 py-1.5">
                 <span className="text-[10px] text-emerald-400">
-                  2/3 tests passing
+                  {t("landing.testsPassing", { passed: 2, total: 3 })}
                 </span>
                 <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[9px] font-medium text-primary">
                   RUN
@@ -88,28 +92,31 @@ export function PlatformFeatures() {
               <div className="flex items-center gap-2">
                 <Shield className="size-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Receive NFTs for your hard work
+                  {t("landing.featureNftTitle")}
                 </h3>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-sm">
-                Collect Solana NFTs as you learn. All credentials are Metaplex
-                Core certificates, 100% verified on-chain.
+                {t("landing.featureNftDesc")}
               </p>
             </div>
             {/* NFT card mockup */}
             <div className="mt-5 mx-4 mb-4 flex items-center gap-3">
               {[
                 {
-                  name: "Solana Fundamentals",
-                  level: "Gold",
+                  name: t("landing.nftNameFundamentals"),
+                  level: t("landing.nftGold"),
                   color: "#eab308",
                 },
                 {
-                  name: "Anchor Developer",
-                  level: "Silver",
+                  name: t("landing.nftNameAnchor"),
+                  level: t("landing.nftSilver"),
                   color: "#a1a1aa",
                 },
-                { name: "DeFi Builder", level: "Bronze", color: "#d97706" },
+                {
+                  name: t("landing.nftNameDeFi"),
+                  level: t("landing.nftBronze"),
+                  color: "#d97706",
+                },
               ].map((nft) => (
                 <div
                   key={nft.name}
@@ -142,12 +149,11 @@ export function PlatformFeatures() {
               <div className="flex items-center gap-2">
                 <Zap className="size-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Soulbound XP system
+                  {t("landing.featureXpTitle")}
                 </h3>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-sm">
-                Non-transferable Token-2022 tokens track every lesson. Your XP
-                is yours forever — no gaming the system.
+                {t("landing.featureXpDesc")}
               </p>
             </div>
             {/* XP progress mockup */}
@@ -158,13 +164,20 @@ export function PlatformFeatures() {
                     12
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Level 12</p>
+                    <p className="text-xs font-medium">
+                      {t("dashboard.currentLevel", { level: 12 })}
+                    </p>
                     <p className="text-[10px] text-muted-foreground">
-                      2,450 / 3,600 XP
+                      {t("dashboard.xpProgress", {
+                        current: "2,450",
+                        total: "3,600",
+                      })}
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] text-xp font-mono">+100 XP</span>
+                <span className="text-[10px] text-xp font-mono">
+                  {t("lesson.xpEarned", { xp: 100 })}
+                </span>
               </div>
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border/50">
                 <div
@@ -201,12 +214,11 @@ export function PlatformFeatures() {
               <div className="flex items-center gap-2">
                 <Trophy className="size-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                  Compete on the leaderboard
+                  {t("landing.featureLeaderboardTitle")}
                 </h3>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-sm">
-                Daily streaks and achievements keep momentum going. See how you
-                stack up against builders worldwide.
+                {t("landing.featureLeaderboardDesc")}
               </p>
             </div>
             {/* Leaderboard mockup */}

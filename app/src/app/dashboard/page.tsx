@@ -44,27 +44,62 @@ const activityDot: Record<string, string> = {
   streak: "bg-orange-400",
 };
 
+function translateActivity(
+  item: ActivityItem,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  let title = item.title;
+  const itemLabel = item.itemName
+    ? t(`activity.items.${item.itemName}`)
+    : undefined;
+
+  if (item.type === "lesson_complete" && itemLabel) {
+    title = t("activity.completedLesson", { name: itemLabel });
+  } else if (item.type === "achievement" && itemLabel) {
+    title = t("activity.earnedBadge", { name: itemLabel });
+  } else if (item.type === "course_start" && itemLabel) {
+    title = t("activity.startedCourse", { name: itemLabel });
+  } else if (item.type === "streak" && item.streakDays) {
+    title = t("activity.learningStreak", { count: item.streakDays });
+  }
+
+  const courseName = item.courseSlug
+    ? t(`courseContent.${item.courseSlug}.title`)
+    : item.courseName;
+
+  let timestamp = item.timestamp;
+  if (item.timeKey) {
+    timestamp =
+      item.timeValue !== undefined
+        ? t(`activity.${item.timeKey}`, { count: item.timeValue })
+        : t(`activity.${item.timeKey}`);
+  }
+
+  return { title, courseName, timestamp };
+}
+
 function LessonIcon({ type }: { type: "video" | "reading" | "challenge" }) {
   if (type === "video") return <Play className="size-3" />;
   if (type === "challenge") return <Code className="size-3" />;
   return <FileText className="size-3" />;
 }
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAY_HEADERS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+function getMonthNames(locale: string): string[] {
+  return Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { month: "long" }).format(
+      new Date(2024, i),
+    ),
+  );
+}
+
+function getDayHeaders(locale: string): string[] {
+  // Jan 1 2024 is Monday
+  return Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" })
+      .format(new Date(2024, 0, i + 1))
+      .slice(0, 2),
+  );
+}
 
 function getMonthGrid(year: number, month: number) {
   const first = new Date(year, month, 1);
@@ -90,6 +125,9 @@ function getMonthGrid(year: number, month: number) {
 }
 
 function StreakCalendar({ activity }: { activity: Record<number, DayStatus> }) {
+  const { locale } = useLocale();
+  const MONTH_NAMES = getMonthNames(locale);
+  const DAY_HEADERS = getDayHeaders(locale);
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth()); // 0-indexed
@@ -323,7 +361,7 @@ export default function DashboardPage() {
           <div>
             <div className="p-5">
               <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-medium">
-                Level Progress
+                {t("dashboard.levelProgress")}
               </p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold tabular-nums">
@@ -348,7 +386,7 @@ export default function DashboardPage() {
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground/60">
                 #{userStats.rank} of {userStats.totalLearners.toLocaleString()}{" "}
-                learners
+                {t("common.learners")}
               </p>
             </div>
 
@@ -478,7 +516,7 @@ export default function DashboardPage() {
               href="/courses"
               className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
             >
-              All courses <ArrowRight className="size-3" />
+              {t("dashboard.allCourses")} <ArrowRight className="size-3" />
             </Link>
           </div>
 
@@ -504,11 +542,14 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {course.title}
+                        {t(`courseContent.${course.slug}.title`)}
                       </p>
                       <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                        {course.completed}/{course.lessons} lessons ·{" "}
-                        {course.difficulty} · {course.duration}
+                        {t("dashboard.lessonsDetail", {
+                          completed: course.completed,
+                          total: course.lessons,
+                        })}{" "}
+                        · {course.difficulty} · {course.duration}
                       </p>
                     </div>
                     <span className="text-xs font-medium tabular-nums text-muted-foreground/70 shrink-0">
@@ -527,13 +568,13 @@ export default function DashboardPage() {
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1.5">
                         <LessonIcon type={next.type} />
-                        Next: {next.title}
+                        {t("common.next")}: {next.title}
                       </span>
                       <Link
                         href={`/courses/${course.slug}/lessons/${next.id}`}
                         className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
                       >
-                        Continue <ArrowRight className="size-3" />
+                        {t("common.continue")} <ArrowRight className="size-3" />
                       </Link>
                     </div>
                   )}
@@ -546,12 +587,14 @@ export default function DashboardPage() {
         {/* ── Recommended ── */}
         <div className="mt-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recommended</h2>
+            <h2 className="text-lg font-semibold">
+              {t("dashboard.recommended")}
+            </h2>
             <Link
               href="/courses"
               className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
             >
-              Browse all <ArrowRight className="size-3" />
+              {t("common.browseAll")} <ArrowRight className="size-3" />
             </Link>
           </div>
 
@@ -569,29 +612,32 @@ export default function DashboardPage() {
           </h2>
 
           <div className="mt-4 rounded-xl border border-border/30 overflow-hidden divide-y divide-border/10">
-            {displayActivity.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-                <div
-                  className={`mt-1.5 size-1.5 rounded-full shrink-0 ${activityDot[item.type] ?? "bg-muted-foreground/20"}`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm">{item.title}</p>
-                  {item.courseName && (
-                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">
-                      {item.courseName}
-                    </p>
-                  )}
+            {displayActivity.map((item) => {
+              const translated = translateActivity(item, t);
+              return (
+                <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                  <div
+                    className={`mt-1.5 size-1.5 rounded-full shrink-0 ${activityDot[item.type] ?? "bg-muted-foreground/20"}`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">{translated.title}</p>
+                    {translated.courseName && (
+                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                        {translated.courseName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground/60">
+                    {item.xp && (
+                      <span className="text-primary font-medium">
+                        +{item.xp} XP
+                      </span>
+                    )}
+                    <span>{translated.timestamp}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground/60">
-                  {item.xp && (
-                    <span className="text-primary font-medium">
-                      +{item.xp} XP
-                    </span>
-                  )}
-                  <span>{item.timestamp}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

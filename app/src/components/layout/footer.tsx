@@ -82,8 +82,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              The open platform for Solana developers. Learn, build, and earn
-              on-chain credentials.
+              {t("footer.description")}
             </p>
 
             {/* Newsletter */}

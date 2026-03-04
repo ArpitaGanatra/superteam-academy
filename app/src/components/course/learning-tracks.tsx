@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Flame, Anchor, Blocks, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,59 +11,62 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-
-const tracks = [
-  {
-    name: "Solana Fundamentals",
-    category: "CORE",
-    lessons: 24,
-    completed: 0,
-    tag: "Beginner",
-    description: "Accounts, transactions, PDAs, and the runtime model.",
-    accent: "#34d399",
-    icon: Blocks,
-    preview: [
-      "let account = ctx.accounts.data;",
-      "account.authority = *ctx.accounts",
-      "  .signer.key;",
-      'msg!("PDA initialized");',
-    ],
-  },
-  {
-    name: "Anchor Development",
-    category: "FRAMEWORK",
-    lessons: 18,
-    completed: 0,
-    tag: "Intermediate",
-    description: "Build and deploy programs with the Anchor framework.",
-    accent: "#eab308",
-    icon: Anchor,
-    preview: [
-      "#[program]",
-      "pub mod counter {",
-      "  pub fn increment(ctx: Ctx)",
-      "    -> Result<()> { .. }",
-    ],
-  },
-  {
-    name: "DeFi Protocols",
-    category: "DEFI",
-    lessons: 15,
-    completed: 0,
-    tag: "Advanced",
-    description: "AMMs, lending protocols, and composable DeFi.",
-    accent: "#22d3ee",
-    icon: Landmark,
-    preview: [
-      "let pool = &ctx.accounts.pool;",
-      "let price = pool.sqrt_price;",
-      "swap_exact_in(pool, amount,",
-      "  min_out)?;",
-    ],
-  },
-];
+import { useLocale } from "@/providers/locale-provider";
 
 export function LearningTracks() {
+  const { t } = useLocale();
+
+  const tracks = [
+    {
+      name: t("landing.trackNameFundamentals"),
+      category: t("landing.trackCategoryCore"),
+      lessons: 24,
+      completed: 0,
+      tag: t("landing.trackTagBeginner"),
+      description: t("landing.trackDescFundamentals"),
+      accent: "#34d399",
+      icon: Blocks,
+      preview: [
+        "let account = ctx.accounts.data;",
+        "account.authority = *ctx.accounts",
+        "  .signer.key;",
+        'msg!("PDA initialized");',
+      ],
+    },
+    {
+      name: t("landing.trackNameAnchor"),
+      category: t("landing.trackCategoryFramework"),
+      lessons: 18,
+      completed: 0,
+      tag: t("landing.trackTagIntermediate"),
+      description: t("landing.trackDescAnchor"),
+      accent: "#eab308",
+      icon: Anchor,
+      preview: [
+        "#[program]",
+        "pub mod counter {",
+        "  pub fn increment(ctx: Ctx)",
+        "    -> Result<()> { .. }",
+      ],
+    },
+    {
+      name: t("landing.trackNameDeFi"),
+      category: t("landing.trackCategoryDeFi"),
+      lessons: 15,
+      completed: 0,
+      tag: t("landing.trackTagAdvanced"),
+      description: t("landing.trackDescDeFi"),
+      accent: "#22d3ee",
+      icon: Landmark,
+      preview: [
+        "let pool = &ctx.accounts.pool;",
+        "let price = pool.sqrt_price;",
+        "swap_exact_in(pool, amount,",
+        "  min_out)?;",
+      ],
+    },
+  ];
+
   return (
     <section className="relative py-28">
       <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-primary/10 blur-[120px] animate-float-2" />
@@ -70,10 +75,10 @@ export function LearningTracks() {
         <div className="flex items-end justify-between">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight">
-              Learning tracks
+              {t("landing.tracksHeading")}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Structured paths from fundamentals to advanced DeFi.
+              {t("landing.tracksDesc")}
             </p>
           </div>
           <Button
@@ -83,7 +88,7 @@ export function LearningTracks() {
             className="hidden sm:inline-flex"
           >
             <Link href="/courses">
-              View all
+              {t("common.viewAll")}
               <ArrowRight />
             </Link>
           </Button>
@@ -154,7 +159,10 @@ export function LearningTracks() {
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                       <span>
-                        {track.completed}/{track.lessons} lessons
+                        {t("landing.lessonsProgress", {
+                          completed: track.completed,
+                          total: track.lessons,
+                        })}
                       </span>
                       <div className="flex items-center gap-1">
                         <Flame className="size-3 text-xp" />
@@ -180,7 +188,8 @@ export function LearningTracks() {
                     className="inline-flex items-center gap-1.5 text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100"
                     style={{ color: track.accent }}
                   >
-                    Start course <ArrowRight className="size-3.5" />
+                    {t("landing.startCourse")}{" "}
+                    <ArrowRight className="size-3.5" />
                   </div>
                 </CardContent>
               </Card>
@@ -191,7 +200,7 @@ export function LearningTracks() {
         <div className="mt-6 text-center sm:hidden">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/courses">
-              View all courses <ArrowRight />
+              {t("landing.viewAllCourses")} <ArrowRight />
             </Link>
           </Button>
         </div>

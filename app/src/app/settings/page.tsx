@@ -28,13 +28,6 @@ import { locales, localeNames } from "@/i18n/config";
 
 type Tab = "profile" | "account" | "preferences" | "privacy";
 
-const tabs: { id: Tab; label: string; icon: typeof User }[] = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "account", label: "Account", icon: Wallet },
-  { id: "preferences", label: "Preferences", icon: Settings2 },
-  { id: "privacy", label: "Privacy", icon: Shield },
-];
-
 /* ── Toggle Switch ── */
 
 function Toggle({
@@ -76,11 +69,13 @@ function ProfileSection({
   setField,
   onSave,
   saved,
+  t,
 }: {
   form: ProfileForm;
   setField: (k: keyof ProfileForm, v: string) => void;
   onSave: () => void;
   saved: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="space-y-6">
@@ -97,7 +92,9 @@ function ProfileSection({
             : "?"}
         </div>
         <div>
-          <p className="text-sm font-medium">{form.name || "Your Name"}</p>
+          <p className="text-sm font-medium">
+            {form.name || t("settings.yourName")}
+          </p>
           <p className="text-xs text-muted-foreground/60">
             @{form.username || "username"}
           </p>
@@ -105,7 +102,7 @@ function ProfileSection({
       </div>
 
       {/* Name */}
-      <FieldGroup label="Display Name">
+      <FieldGroup label={t("settings.displayName")}>
         <input
           value={form.name}
           onChange={(e) => setField("name", e.target.value)}
@@ -114,7 +111,7 @@ function ProfileSection({
       </FieldGroup>
 
       {/* Username */}
-      <FieldGroup label="Username">
+      <FieldGroup label={t("settings.username")}>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground/50">
             @
@@ -128,7 +125,7 @@ function ProfileSection({
       </FieldGroup>
 
       {/* Bio */}
-      <FieldGroup label="Bio">
+      <FieldGroup label={t("settings.bio")}>
         <textarea
           value={form.bio}
           onChange={(e) => setField("bio", e.target.value)}
@@ -138,7 +135,7 @@ function ProfileSection({
       </FieldGroup>
 
       {/* Social Links */}
-      <FieldGroup label="Social Links">
+      <FieldGroup label={t("settings.socialLinks")}>
         <div className="space-y-2">
           <SocialInput
             icon={Github}
@@ -167,12 +164,12 @@ function ProfileSection({
           onClick={onSave}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
         >
-          Save Changes
+          {t("settings.saveChanges")}
         </button>
         {saved && (
           <span className="text-xs text-primary flex items-center gap-1">
             <Check className="size-3" />
-            Saved!
+            {t("common.saved")}
           </span>
         )}
       </div>
@@ -185,11 +182,12 @@ function ProfileSection({
 function AccountSection() {
   const { publicKey } = useWallet();
   const { user, linkGoogle, linkGithub, unlinkProvider } = useAuth();
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   const walletAddress = publicKey?.toBase58() ?? "";
   const truncated = walletAddress
     ? walletAddress.slice(0, 4) + "..." + walletAddress.slice(-4)
-    : "Not connected";
+    : t("common.notConnected");
 
   function handleCopy() {
     if (!walletAddress) return;
@@ -201,7 +199,7 @@ function AccountSection() {
   return (
     <div className="space-y-6">
       {/* Connected Wallet */}
-      <FieldGroup label="Connected Wallet">
+      <FieldGroup label={t("settings.connectedWallet")}>
         <div className="flex items-center gap-2 rounded-lg border border-border/40 px-3 py-2.5">
           <Wallet className="size-4 text-muted-foreground/60" />
           <span className="text-sm font-mono flex-1">{truncated}</span>
@@ -220,19 +218,19 @@ function AccountSection() {
 
       {/* Email */}
       <FieldGroup
-        label="Email"
-        description="For notifications and account recovery"
+        label={t("settings.email")}
+        description={t("settings.emailDescription")}
       >
         <input
           type="email"
           defaultValue={user?.email ?? ""}
-          placeholder="Add your email"
+          placeholder={t("settings.addEmail")}
           className="w-full rounded-lg border border-border/40 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground/40 transition-colors"
         />
       </FieldGroup>
 
       {/* Connected Accounts */}
-      <FieldGroup label="Connected Accounts">
+      <FieldGroup label={t("settings.connectedAccounts")}>
         <div className="space-y-2">
           <div className="flex items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5">
             <Github className="size-4 text-muted-foreground/60" />
@@ -240,7 +238,7 @@ function AccountSection() {
             {user?.githubId ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  Connected
+                  {t("common.connected")}
                 </span>
                 <button
                   onClick={() => unlinkProvider("github")}
@@ -254,7 +252,7 @@ function AccountSection() {
                 onClick={linkGithub}
                 className="text-[10px] font-medium text-muted-foreground/70 border border-border/40 px-2 py-0.5 rounded-full hover:text-foreground transition-colors"
               >
-                Connect
+                {t("common.connect")}
               </button>
             )}
           </div>
@@ -273,7 +271,7 @@ function AccountSection() {
             {user?.googleId ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  Connected
+                  {t("common.connected")}
                 </span>
                 <button
                   onClick={() => unlinkProvider("google")}
@@ -287,7 +285,7 @@ function AccountSection() {
                 onClick={linkGoogle}
                 className="text-[10px] font-medium text-muted-foreground/70 border border-border/40 px-2 py-0.5 rounded-full hover:text-foreground transition-colors"
               >
-                Connect
+                {t("common.connect")}
               </button>
             )}
           </div>
@@ -301,6 +299,7 @@ function AccountSection() {
 
 function PreferencesSection() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLocale();
   const [notifications, setNotifications] = useState({
     courseUpdates: true,
     achievements: true,
@@ -308,27 +307,27 @@ function PreferencesSection() {
   });
 
   const themes = [
-    { value: "light", label: "Light" },
-    { value: "dark", label: "Dark" },
-    { value: "system", label: "System" },
+    { value: "light", label: t("settings.themeLight") },
+    { value: "dark", label: t("settings.themeDark") },
+    { value: "system", label: t("settings.themeSystem") },
   ];
 
   return (
     <div className="space-y-6">
       {/* Theme */}
-      <FieldGroup label="Theme">
+      <FieldGroup label={t("settings.theme")}>
         <div className="flex gap-0.5 rounded-lg bg-muted/30 p-1 w-fit">
-          {themes.map((t) => (
+          {themes.map((th) => (
             <button
-              key={t.value}
-              onClick={() => setTheme(t.value)}
+              key={th.value}
+              onClick={() => setTheme(th.value)}
               className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                theme === t.value
+                theme === th.value
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t.label}
+              {th.label}
             </button>
           ))}
         </div>
@@ -338,12 +337,12 @@ function PreferencesSection() {
       <LanguageSelector />
 
       {/* Notifications */}
-      <FieldGroup label="Notifications">
+      <FieldGroup label={t("settings.notifications")}>
         <div className="space-y-3">
           <NotificationRow
             icon={Bell}
-            title="Course Updates"
-            description="New lessons, course completions"
+            title={t("settings.courseUpdates")}
+            description={t("settings.courseUpdatesDesc")}
             enabled={notifications.courseUpdates}
             onToggle={() =>
               setNotifications((n) => ({
@@ -354,8 +353,8 @@ function PreferencesSection() {
           />
           <NotificationRow
             icon={Bell}
-            title="Achievement Alerts"
-            description="New badges and milestones"
+            title={t("settings.achievementAlerts")}
+            description={t("settings.achievementAlertsDesc")}
             enabled={notifications.achievements}
             onToggle={() =>
               setNotifications((n) => ({
@@ -366,8 +365,8 @@ function PreferencesSection() {
           />
           <NotificationRow
             icon={notifications.streakReminders ? Bell : BellOff}
-            title="Streak Reminders"
-            description="Daily reminders to maintain your streak"
+            title={t("settings.streakReminders")}
+            description={t("settings.streakRemindersDesc")}
             enabled={notifications.streakReminders}
             onToggle={() =>
               setNotifications((n) => ({
@@ -386,6 +385,7 @@ function PreferencesSection() {
 
 function PrivacySection() {
   const [isPublic, setIsPublic] = useState(userProfile.isPublic);
+  const { t } = useLocale();
 
   return (
     <div className="space-y-6">
@@ -398,11 +398,13 @@ function PrivacySection() {
             <Lock className="size-4 text-muted-foreground/60" />
           )}
           <div>
-            <p className="text-sm font-medium">Profile Visibility</p>
+            <p className="text-sm font-medium">
+              {t("settings.profileVisibility")}
+            </p>
             <p className="text-[11px] text-muted-foreground/60">
               {isPublic
-                ? "Your profile is visible to everyone"
-                : "Only you can see your profile"}
+                ? t("settings.publicDescription")
+                : t("settings.privateDescription")}
             </p>
           </div>
         </div>
@@ -411,25 +413,26 @@ function PrivacySection() {
 
       {/* Data Export */}
       <FieldGroup
-        label="Data Export"
-        description="Download all your learning data, achievements, and credentials"
+        label={t("settings.exportData")}
+        description={t("settings.exportDataFull")}
       >
         <button className="flex items-center gap-2 rounded-lg border border-border/40 px-3 py-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
           <Download className="size-3.5" />
-          Export Data
+          {t("settings.exportData")}
         </button>
       </FieldGroup>
 
       {/* Danger Zone */}
       <div className="pt-4 border-t border-border/20">
-        <p className="text-sm font-medium text-destructive">Danger Zone</p>
+        <p className="text-sm font-medium text-destructive">
+          {t("settings.dangerZone")}
+        </p>
         <p className="text-[11px] text-muted-foreground/60 mt-1">
-          Permanently delete your account and all associated data. This action
-          cannot be undone.
+          {t("settings.deleteWarningFull")}
         </p>
         <button className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors">
           <Trash2 className="size-3.5" />
-          Delete Account
+          {t("settings.deleteAccount")}
         </button>
       </div>
     </div>
@@ -514,10 +517,10 @@ function NotificationRow({
 /* ── Language Selector ── */
 
 function LanguageSelector() {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
 
   return (
-    <FieldGroup label="Language">
+    <FieldGroup label={t("common.language")}>
       <div className="flex gap-0.5 rounded-lg bg-muted/30 p-1 w-fit">
         {locales.map((loc) => (
           <button
@@ -541,16 +544,24 @@ function LanguageSelector() {
 
 function SettingsPageInner() {
   const searchParams = useSearchParams();
+  const { t } = useLocale();
+
+  const tabs: { id: Tab; label: string; icon: typeof User }[] = [
+    { id: "profile", label: t("settings.profileTab"), icon: User },
+    { id: "account", label: t("settings.accountTab"), icon: Wallet },
+    { id: "preferences", label: t("settings.preferencesTab"), icon: Settings2 },
+    { id: "privacy", label: t("settings.privacyTab"), icon: Shield },
+  ];
+
   const initialTab = useMemo(() => {
-    const t = searchParams.get("tab");
-    return t === "account" || t === "preferences" || t === "privacy"
-      ? t
+    const tab = searchParams.get("tab");
+    return tab === "account" || tab === "preferences" || tab === "privacy"
+      ? tab
       : "profile";
   }, [searchParams]);
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [saved, setSaved] = useState(false);
   const { user, updateProfile } = useAuth();
-  const { t } = useLocale();
 
   const [form, setForm] = useState({
     name: user?.name ?? userProfile.name,
@@ -636,6 +647,7 @@ function SettingsPageInner() {
                   setField={setField}
                   onSave={handleSave}
                   saved={saved}
+                  t={t}
                 />
               )}
               {activeTab === "account" && <AccountSection />}

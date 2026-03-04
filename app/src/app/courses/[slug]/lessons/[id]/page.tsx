@@ -54,7 +54,8 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full bg-[#0c0c0e] text-muted-foreground text-xs">
-      Loading editor...
+      {/* Static loading text — outside React tree, no hook access */}
+      ...
     </div>
   ),
 });
@@ -162,6 +163,7 @@ function ChallengeEditor({
   accent,
   xpReward,
   onComplete,
+  t,
 }: {
   code: string;
   onChange: (code: string) => void;
@@ -170,6 +172,7 @@ function ChallengeEditor({
   accent: string;
   xpReward: number;
   onComplete: () => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   const [running, setRunning] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>(
@@ -186,7 +189,7 @@ function ChallengeEditor({
 
   const handleRun = useCallback(() => {
     setRunning(true);
-    setOutput(["Compiling...", ""]);
+    setOutput([t("lesson.compiling"), ""]);
     setActiveTab("tests");
     setAllPassed(false);
     setShowCelebration(false);
@@ -206,11 +209,14 @@ function ChallengeEditor({
         setOutput((prev) => [
           ...prev,
           "",
-          `Test results: ${passCount} passed, ${failCount} failed`,
+          t("lesson.testResultsSummary", {
+            passed: String(passCount),
+            failed: String(failCount),
+          }),
           "",
           allPass
-            ? `All tests passed! +${xpReward} XP`
-            : `${failCount} test(s) failed. Check your implementation.`,
+            ? t("lesson.allTestsPassedXp", { xp: String(xpReward) })
+            : t("lesson.testsFailedCheck", { count: String(failCount) }),
         ]);
 
         if (allPass) {
@@ -262,7 +268,7 @@ function ChallengeEditor({
       setTestResults([...results]);
       setOutput((prev) => [
         ...prev,
-        `${passed ? "✓" : "✗"} ${tc.name}${passed ? "" : ` — expected: ${tc.expected}`}`,
+        `${passed ? "\u2713" : "\u2717"} ${tc.name}${passed ? "" : ` \u2014 expected: ${tc.expected}`}`,
       ]);
 
       setTimeout(() => runTest(i + 1), 400);
@@ -291,7 +297,7 @@ function ChallengeEditor({
               <Trophy className="size-8" style={{ color: accent }} />
             </div>
             <h3 className="text-lg font-semibold text-white">
-              Challenge Complete!
+              {t("lesson.challengeComplete")}
             </h3>
             <div className="mt-2 flex items-center justify-center gap-1.5 text-amber-400">
               <Sparkles className="size-4" />
@@ -306,7 +312,7 @@ function ChallengeEditor({
                 onComplete();
               }}
             >
-              Continue
+              {t("common.continue")}
               <ArrowRight className="size-3.5" />
             </Button>
           </div>
@@ -322,10 +328,14 @@ function ChallengeEditor({
           {hasRun && (
             <div className="flex items-center gap-2 text-[11px]">
               {passedCount > 0 && (
-                <span className="text-emerald-400">{passedCount} passed</span>
+                <span className="text-emerald-400">
+                  {passedCount} {t("lesson.passed")}
+                </span>
               )}
               {failedCount > 0 && (
-                <span className="text-red-400">{failedCount} failed</span>
+                <span className="text-red-400">
+                  {failedCount} {t("lesson.failed")}
+                </span>
               )}
             </div>
           )}
@@ -338,7 +348,7 @@ function ChallengeEditor({
             className="text-[11px] text-muted-foreground hover:text-foreground h-7 px-2"
           >
             <RotateCcw className="size-3" />
-            Reset
+            {t("lesson.reset")}
           </Button>
           <Button
             size="xs"
@@ -353,12 +363,12 @@ function ChallengeEditor({
             {running ? (
               <>
                 <Loader2 className="size-3 animate-spin" />
-                Running...
+                {t("lesson.running")}
               </>
             ) : (
               <>
                 <Play className="size-3" />
-                Run Tests
+                {t("lesson.runTests")}
               </>
             )}
           </Button>
@@ -401,7 +411,7 @@ function ChallengeEditor({
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Tests
+            {t("lesson.tests")}
             {hasRun && (
               <span className="ml-1.5">
                 ({passedCount}/{testCases.length})
@@ -417,7 +427,7 @@ function ChallengeEditor({
             }`}
           >
             <Terminal className="size-3 inline mr-1" />
-            Output
+            {t("lesson.output")}
           </button>
         </div>
 
@@ -453,17 +463,17 @@ function ChallengeEditor({
                     </p>
                     <div className="mt-0.5 flex gap-4 text-[10px] text-muted-foreground">
                       <span>
-                        Input:{" "}
+                        {t("lesson.input")}:{" "}
                         <code className="text-[#a1a1aa]">{tc.input}</code>
                       </span>
                       <span>
-                        Expected:{" "}
+                        {t("lesson.expected")}:{" "}
                         <code className="text-[#a1a1aa]">{tc.expected}</code>
                       </span>
                     </div>
                     {testResults[i] === "fail" && (
                       <p className="mt-1 text-[10px] text-red-400/80">
-                        Check your implementation against the expected output.
+                        {t("lesson.checkImplementation")}
                       </p>
                     )}
                   </div>
@@ -481,7 +491,7 @@ function ChallengeEditor({
                 >
                   <CheckCircle2 className="size-4 shrink-0" />
                   <span className="font-medium">
-                    All tests passed! Challenge complete.
+                    {t("lesson.allTestsComplete")}
                   </span>
                   <span className="ml-auto flex items-center gap-1">
                     <Flame className="size-3" />+{xpReward} XP
@@ -493,7 +503,7 @@ function ChallengeEditor({
             <div className="p-3 font-mono text-[11px] leading-relaxed text-[#a1a1aa] whitespace-pre-wrap">
               {output.length > 0
                 ? output.join("\n")
-                : "Click 'Run Tests' to see output..."}
+                : t("lesson.clickRunTests")}
             </div>
           )}
         </div>
@@ -517,6 +527,7 @@ function LessonSidebar({
   accent: string;
   onClose?: () => void;
 }) {
+  const { t } = useLocale();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(() => {
     const currentModule = course?.modules.find((m) =>
       m.lessons.some((l) => l.id === currentLessonId),
@@ -539,9 +550,11 @@ function LessonSidebar({
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-border/50">
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{course.title}</p>
+          <p className="text-sm font-medium truncate">
+            {t(`courseContent.${courseSlug}.title`)}
+          </p>
           <p className="text-[11px] text-muted-foreground">
-            {course.lessons} lessons
+            {course.lessons} {t("common.lessons")}
           </p>
         </div>
         {onClose && (
@@ -568,7 +581,7 @@ function LessonSidebar({
                   <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className="text-xs font-medium truncate">
-                  {mi + 1}. {module.title}
+                  {mi + 1}. {t(`courseContent.${courseSlug}.${module.id}`)}
                 </span>
               </button>
               {isExpanded && (
@@ -593,7 +606,9 @@ function LessonSidebar({
                         ) : (
                           <LessonTypeIcon type={lesson.type} />
                         )}
-                        <span className="truncate">{lesson.title}</span>
+                        <span className="truncate">
+                          {t(`courseContent.${courseSlug}.${lesson.id}`)}
+                        </span>
                         <span className="ml-auto text-[10px] shrink-0">
                           {lesson.duration}
                         </span>
@@ -620,9 +635,9 @@ export default function LessonPage() {
 
 function LessonContent({ slug, id }: { slug: string; id: string }) {
   const course = getCourseBySlug(slug);
-  const lessonContent = getLessonContent(slug, id);
   const { publicKey } = useWallet();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const lessonContent = getLessonContent(slug, id, locale);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [expandedHints, setExpandedHints] = useState<Set<number>>(new Set());
@@ -714,14 +729,16 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
       <div className="relative min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="size-12 text-muted-foreground/60 mx-auto" />
-          <h1 className="mt-4 text-xl font-semibold">Lesson not found</h1>
+          <h1 className="mt-4 text-xl font-semibold">
+            {t("lesson.lessonNotFound")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            This lesson doesn&apos;t exist or has been removed.
+            {t("lesson.lessonNotFoundDesc")}
           </p>
           <Button variant="outline" size="sm" className="mt-4" asChild>
             <Link href={`/courses/${slug}`}>
               <ArrowLeft className="size-3.5" />
-              Back to course
+              {t("lesson.backToCourse")}
             </Link>
           </Button>
         </div>
@@ -736,7 +753,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
 
   const markdownContent =
     lessonContent?.markdown ??
-    `## ${currentLesson.title}\n\nLesson content is coming soon. Check back later!\n\n> This lesson is part of the **${course.title}** course.`;
+    `## ${t(`courseContent.${slug}.${currentLesson.id}`)}\n\n${t("lesson.lessonComingSoon")}\n\n> ${t("lesson.lessonPartOf", { course: t(`courseContent.${slug}.title`) })}`;
 
   return (
     <div className="fixed inset-0 top-14 flex flex-col bg-background">
@@ -761,10 +778,12 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <LessonTypeIcon type={currentLesson.type} />
           <span className="text-sm font-medium truncate">
-            {currentLesson.title}
+            {t(`courseContent.${slug}.${currentLesson.id}`)}
           </span>
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-            {currentLesson.type}
+            {t(
+              `lesson.type${currentLesson.type.charAt(0).toUpperCase()}${currentLesson.type.slice(1)}`,
+            )}
           </Badge>
           {completed && (
             <Badge
@@ -772,7 +791,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
               style={{ background: course.accent, color: "#000" }}
             >
               <CheckCircle2 className="size-2.5" />
-              Done
+              {t("lesson.done")}
             </Badge>
           )}
         </div>
@@ -828,7 +847,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                           className="size-4"
                           style={{ color: course.accent }}
                         />
-                        Test Cases
+                        {t("lesson.testCases")}
                       </h3>
                       <div className="space-y-1.5">
                         {lessonContent.testCases!.map((tc, i) => (
@@ -840,7 +859,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                               {tc.name}
                             </p>
                             <p className="mt-0.5 text-muted-foreground">
-                              Expected: {tc.expected}
+                              {t("lesson.expected")}: {tc.expected}
                             </p>
                           </div>
                         ))}
@@ -853,7 +872,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                     <div className="mt-8">
                       <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                         <Lightbulb className="size-4 text-amber-400" />
-                        Hints
+                        {t("lesson.hints")}
                       </h3>
                       <div className="space-y-2">
                         {lessonContent.hints.map((hint, i) => (
@@ -870,7 +889,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                               ) : (
                                 <EyeOff className="size-3.5" />
                               )}
-                              Hint {i + 1}
+                              {t("lesson.hint")} {i + 1}
                             </button>
                             {expandedHints.has(i) && (
                               <div className="px-3 pb-3 text-xs text-muted-foreground border-t border-border/30 pt-2">
@@ -895,12 +914,12 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                         {showSolution ? (
                           <>
                             <EyeOff className="size-3.5" />
-                            Hide Solution
+                            {t("lesson.hideSolution")}
                           </>
                         ) : (
                           <>
                             <Eye className="size-3.5" />
-                            Show Solution
+                            {t("lesson.showSolution")}
                           </>
                         )}
                       </Button>
@@ -927,6 +946,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                 accent={course.accent}
                 xpReward={xpPerLesson}
                 onComplete={handleComplete}
+                t={t}
               />
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -947,15 +967,17 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/courses/${slug}/lessons/${prevLesson.id}`}>
                 <ArrowLeft className="size-3.5" />
-                <span className="hidden sm:inline">{prevLesson.title}</span>
-                <span className="sm:hidden">Previous</span>
+                <span className="hidden sm:inline">
+                  {t(`courseContent.${slug}.${prevLesson.id}`)}
+                </span>
+                <span className="sm:hidden">{t("common.previous")}</span>
               </Link>
             </Button>
           ) : (
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/courses/${slug}`}>
                 <ArrowLeft className="size-3.5" />
-                Course overview
+                {t("lesson.courseOverview")}
               </Link>
             </Button>
           )}
@@ -973,12 +995,12 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
           {completed ? (
             <>
               <CheckCircle2 className="size-3.5" />
-              Completed
+              {t("common.completed")}
             </>
           ) : (
             <>
               <CheckCircle2 className="size-3.5" />
-              Mark Complete
+              {t("lesson.markComplete")}
             </>
           )}
         </Button>
@@ -987,15 +1009,17 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
           {nextLesson ? (
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/courses/${slug}/lessons/${nextLesson.id}`}>
-                <span className="hidden sm:inline">{nextLesson.title}</span>
-                <span className="sm:hidden">Next</span>
+                <span className="hidden sm:inline">
+                  {t(`courseContent.${slug}.${nextLesson.id}`)}
+                </span>
+                <span className="sm:hidden">{t("common.next")}</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           ) : (
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/courses/${slug}`}>
-                Finish course
+                {t("lesson.finishCourse")}
                 <ArrowRight className="size-3.5" />
               </Link>
             </Button>

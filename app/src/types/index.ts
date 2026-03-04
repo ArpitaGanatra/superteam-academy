@@ -167,8 +167,13 @@ export interface ActivityItem {
     | "streak";
   title: string;
   courseName?: string;
+  courseSlug?: string;
+  itemName?: string;
+  streakDays?: number;
   xp?: number;
   timestamp: string;
+  timeKey?: string;
+  timeValue?: number;
 }
 
 /* ── Skill Radar ── */

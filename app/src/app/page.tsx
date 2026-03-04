@@ -220,7 +220,7 @@ export default function LandingPage() {
                   <div className="flex items-center gap-2 border-b border-border/30 px-3 py-2">
                     <div className="size-4 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500" />
                     <span className="text-[10px] font-medium text-muted-foreground/60">
-                      Select wallet
+                      {t("common.selectWallet")}
                     </span>
                   </div>
                   {/* Phantom */}
@@ -363,10 +363,10 @@ export default function LandingPage() {
                     <GraduationCap className="size-6 text-primary" />
                   </div>
                   <p className="mt-3 text-[11px] font-semibold">
-                    Solana Fundamentals
+                    {t("courses.pathSolanaFundamentals")}
                   </p>
                   <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                    Completed • 24 lessons
+                    {t("landing.completedLessons", { count: 24 })}
                   </p>
                   <div className="mt-3 flex items-center justify-center gap-1.5">
                     <div className="h-px flex-1 bg-border/30" />

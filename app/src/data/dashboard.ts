@@ -39,8 +39,13 @@ export interface ActivityItem {
   type: "lesson_complete" | "course_start" | "achievement" | "streak";
   title: string;
   courseName?: string;
+  courseSlug?: string;
+  itemName?: string;
+  streakDays?: number;
   xp?: number;
   timestamp: string;
+  timeKey?: string;
+  timeValue?: number;
 }
 
 /* ── Mock Data ── */
@@ -204,43 +209,63 @@ export const activityFeed: ActivityItem[] = [
     type: "lesson_complete",
     title: 'Completed "Accounts & Ownership"',
     courseName: "Solana Fundamentals",
+    courseSlug: "solana-fundamentals",
+    itemName: "accountsOwnership",
     xp: 100,
     timestamp: "2 hours ago",
+    timeKey: "hoursAgo",
+    timeValue: 2,
   },
   {
     id: "act2",
     type: "achievement",
     title: 'Earned "Solana Sage" badge',
+    itemName: "solanaSage",
     timestamp: "2 hours ago",
+    timeKey: "hoursAgo",
+    timeValue: 2,
   },
   {
     id: "act3",
     type: "lesson_complete",
     title: 'Completed "PDAs Deep Dive"',
     courseName: "Solana Fundamentals",
+    courseSlug: "solana-fundamentals",
+    itemName: "pdasDeepDive",
     xp: 100,
     timestamp: "yesterday",
+    timeKey: "yesterday",
   },
   {
     id: "act4",
     type: "streak",
     title: "12-day learning streak!",
+    streakDays: 12,
     timestamp: "today",
+    timeKey: "today",
   },
   {
     id: "act5",
     type: "course_start",
     title: 'Started "Anchor Development"',
     courseName: "Anchor Development",
+    courseSlug: "anchor-development",
+    itemName: "anchorDevelopment",
     timestamp: "3 days ago",
+    timeKey: "daysAgo",
+    timeValue: 3,
   },
   {
     id: "act6",
     type: "lesson_complete",
     title: 'Completed "Intro to Instructions"',
     courseName: "Anchor Development",
+    courseSlug: "anchor-development",
+    itemName: "introToInstructions",
     xp: 150,
     timestamp: "3 days ago",
+    timeKey: "daysAgo",
+    timeValue: 3,
   },
 ];
 

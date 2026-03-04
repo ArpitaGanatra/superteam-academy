@@ -15,43 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CourseCard } from "@/components/course/course-card";
 import { courses } from "@/data/courses";
+import { useLocale } from "@/providers/locale-provider";
 
 /* ── Filter config ── */
 
 const difficulties = ["Beginner", "Intermediate", "Advanced"] as const;
 const topics = ["Core", "Framework", "Security", "DeFi"] as const;
 const durations = ["< 3h", "3-4h", "5h+"] as const;
-
-const paths = [
-  {
-    name: "Solana Fundamentals",
-    topic: "Core",
-    icon: Blocks,
-    accent: "#34d399",
-    count: 3,
-  },
-  {
-    name: "Anchor Development",
-    topic: "Framework",
-    icon: Anchor,
-    accent: "#eab308",
-    count: 2,
-  },
-  {
-    name: "DeFi Developer",
-    topic: "DeFi",
-    icon: Landmark,
-    accent: "#22d3ee",
-    count: 3,
-  },
-  {
-    name: "Security Auditor",
-    topic: "Security",
-    icon: Shield,
-    accent: "#f472b6",
-    count: 1,
-  },
-];
 
 function matchesDuration(courseDuration: string, filter: string): boolean {
   const hours = parseInt(courseDuration);
@@ -62,6 +32,7 @@ function matchesDuration(courseDuration: string, filter: string): boolean {
 }
 
 export default function CourseCatalogPage() {
+  const { t } = useLocale();
   const [search, setSearch] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
     null,
@@ -71,6 +42,50 @@ export default function CourseCatalogPage() {
 
   const hasFilters =
     selectedDifficulty || selectedTopic || selectedDuration || search;
+
+  const difficultyLabels: Record<string, string> = {
+    Beginner: t("courses.beginner"),
+    Intermediate: t("courses.intermediate"),
+    Advanced: t("courses.advanced"),
+  };
+
+  const topicLabels: Record<string, string> = {
+    Core: t("courses.topicCore"),
+    Framework: t("courses.topicFramework"),
+    Security: t("courses.topicSecurity"),
+    DeFi: t("courses.topicDeFi"),
+  };
+
+  const paths = [
+    {
+      name: t("courses.pathSolanaFundamentals"),
+      topic: "Core",
+      icon: Blocks,
+      accent: "#34d399",
+      count: 3,
+    },
+    {
+      name: t("courses.pathAnchorDevelopment"),
+      topic: "Framework",
+      icon: Anchor,
+      accent: "#eab308",
+      count: 2,
+    },
+    {
+      name: t("courses.pathDeFiDeveloper"),
+      topic: "DeFi",
+      icon: Landmark,
+      accent: "#22d3ee",
+      count: 3,
+    },
+    {
+      name: t("courses.pathSecurityAuditor"),
+      topic: "Security",
+      icon: Shield,
+      accent: "#f472b6",
+      count: 1,
+    },
+  ];
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -109,19 +124,16 @@ export default function CourseCatalogPage() {
         {/* Page header */}
         <div>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Course Catalog
+            {t("courses.title")}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            Structured paths from zero to shipping on mainnet. Pick a track or
-            explore individual courses.
-          </p>
+          <p className="mt-2 text-muted-foreground">{t("courses.subtitle")}</p>
         </div>
 
         {/* Search */}
         <div className="relative mt-8">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Search courses..."
+            placeholder={t("courses.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-11 pl-10 bg-card/80 backdrop-blur-sm border-border/50"
@@ -139,7 +151,7 @@ export default function CourseCatalogPage() {
         {/* Filters */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground mr-1">
-            Difficulty
+            {t("common.difficulty")}
           </span>
           {difficulties.map((d) => (
             <button
@@ -153,49 +165,56 @@ export default function CourseCatalogPage() {
                   : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >
-              {d}
+              {difficultyLabels[d]}
             </button>
           ))}
 
           <div className="mx-2 h-4 w-px bg-border/50" />
 
           <span className="text-xs font-medium text-muted-foreground mr-1">
-            Topic
+            {t("common.topic")}
           </span>
-          {topics.map((t) => (
+          {topics.map((tp) => (
             <button
-              key={t}
-              onClick={() => setSelectedTopic(selectedTopic === t ? null : t)}
+              key={tp}
+              onClick={() => setSelectedTopic(selectedTopic === tp ? null : tp)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                selectedTopic === t
+                selectedTopic === tp
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
               }`}
             >
-              {t}
+              {topicLabels[tp]}
             </button>
           ))}
 
           <div className="mx-2 h-4 w-px bg-border/50" />
 
           <span className="text-xs font-medium text-muted-foreground mr-1">
-            Duration
+            {t("common.duration")}
           </span>
-          {durations.map((dur) => (
-            <button
-              key={dur}
-              onClick={() =>
-                setSelectedDuration(selectedDuration === dur ? null : dur)
-              }
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                selectedDuration === dur
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
-              }`}
-            >
-              {dur}
-            </button>
-          ))}
+          {durations.map((dur) => {
+            const durationLabels: Record<string, string> = {
+              "< 3h": t("courses.short"),
+              "3-4h": t("courses.medium"),
+              "5h+": t("courses.long"),
+            };
+            return (
+              <button
+                key={dur}
+                onClick={() =>
+                  setSelectedDuration(selectedDuration === dur ? null : dur)
+                }
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  selectedDuration === dur
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                }`}
+              >
+                {durationLabels[dur]}
+              </button>
+            );
+          })}
 
           {hasFilters && (
             <>
@@ -204,7 +223,7 @@ export default function CourseCatalogPage() {
                 onClick={clearAll}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Clear all
+                {t("common.clearAll")}
               </button>
             </>
           )}
@@ -219,7 +238,7 @@ export default function CourseCatalogPage() {
                 className="gap-1 pr-1 cursor-pointer"
                 onClick={() => setSelectedDifficulty(null)}
               >
-                {selectedDifficulty}
+                {difficultyLabels[selectedDifficulty]}
                 <X className="size-3" />
               </Badge>
             )}
@@ -229,7 +248,7 @@ export default function CourseCatalogPage() {
                 className="gap-1 pr-1 cursor-pointer"
                 onClick={() => setSelectedTopic(null)}
               >
-                {selectedTopic}
+                {topicLabels[selectedTopic]}
                 <X className="size-3" />
               </Badge>
             )}
@@ -254,7 +273,7 @@ export default function CourseCatalogPage() {
               </Badge>
             )}
             <span className="text-xs text-muted-foreground">
-              {filtered.length} course{filtered.length !== 1 && "s"}
+              {t("courses.nCourses", { count: filtered.length })}
             </span>
           </div>
         )}
@@ -262,7 +281,7 @@ export default function CourseCatalogPage() {
         {/* Learning Paths */}
         <div className="mt-10">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
-            Learning Paths
+            {t("courses.learningPaths")}
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {paths.map((path) => (
@@ -292,7 +311,7 @@ export default function CourseCatalogPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{path.name}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {path.count} courses
+                    {t("courses.nCourses", { count: path.count })}
                   </p>
                 </div>
               </button>
@@ -311,9 +330,11 @@ export default function CourseCatalogPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen className="size-10 text-muted-foreground/60" />
-              <p className="mt-4 text-lg font-medium">No courses found</p>
+              <p className="mt-4 text-lg font-medium">
+                {t("courses.noCoursesFound")}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Try adjusting your filters or search terms.
+                {t("courses.tryAdjusting")}
               </p>
               <Button
                 variant="outline"
@@ -321,7 +342,7 @@ export default function CourseCatalogPage() {
                 className="mt-4"
                 onClick={clearAll}
               >
-                Clear all filters
+                {t("courses.clearAndBrowse")}
               </Button>
             </div>
           )}

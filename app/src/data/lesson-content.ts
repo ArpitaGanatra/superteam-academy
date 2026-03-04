@@ -578,10 +578,43 @@ const allLessons: LessonContent[] = [
   ...anchorLessons,
 ];
 
+let esLessonsCache: LessonContent[] | null = null;
+let ptBRLessonsCache: LessonContent[] | null = null;
+
+function loadLocaleLessons(locale: string): void {
+  if (locale === "es" && !esLessonsCache) {
+    import("./lesson-content-es").then((mod) => {
+      esLessonsCache = mod.esLessons;
+    });
+  }
+  if (locale === "pt-BR" && !ptBRLessonsCache) {
+    import("./lesson-content-pt-BR").then((mod) => {
+      ptBRLessonsCache = mod.ptBRLessons;
+    });
+  }
+}
+
 export function getLessonContent(
   courseSlug: string,
   lessonId: string,
+  locale?: string,
 ): LessonContent | undefined {
+  if (locale && locale !== "en") {
+    const cache =
+      locale === "es"
+        ? esLessonsCache
+        : locale === "pt-BR"
+          ? ptBRLessonsCache
+          : null;
+    if (cache) {
+      const found = cache.find(
+        (l) => l.courseSlug === courseSlug && l.lessonId === lessonId,
+      );
+      if (found) return found;
+    }
+    // Trigger async load for next render
+    loadLocaleLessons(locale);
+  }
   return allLessons.find(
     (l) => l.courseSlug === courseSlug && l.lessonId === lessonId,
   );

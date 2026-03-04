@@ -15,17 +15,18 @@ import {
 } from "lucide-react";
 import { credentials, getCredentialById, userProfile } from "@/data/profile";
 import { courses } from "@/data/courses";
+import { useLocale } from "@/providers/locale-provider";
 
 const MOCK_OWNER = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
 
-/* ── Track → Course slug mapping ── */
+/* -- Track -> Course slug mapping -- */
 const trackToCourse: Record<string, string> = {
   "Solana Core": "solana-fundamentals",
   "Anchor Framework": "anchor-development",
   "Program Security": "program-security",
 };
 
-/* ── NFT Artwork (inline SVG per credential) ── */
+/* -- NFT Artwork (inline SVG per credential) -- */
 
 function NftArt({
   accent,
@@ -304,10 +305,11 @@ function NftArt({
   );
 }
 
-/* ── Copy Button ── */
+/* -- Copy Button -- */
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useLocale();
 
   function handleCopy() {
     navigator.clipboard.writeText(text);
@@ -323,7 +325,11 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
       {copied ? (
         <>
           <Check className="size-3 text-primary" />
-          {label && <span className="text-[10px] text-primary">Copied!</span>}
+          {label && (
+            <span className="text-[10px] text-primary">
+              {t("common.copied")}
+            </span>
+          )}
         </>
       ) : (
         <>
@@ -335,12 +341,13 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
   );
 }
 
-/* ── Page ── */
+/* -- Page -- */
 
 export default function CertificatePage() {
   const { id } = useParams<{ id: string }>();
   const credential = getCredentialById(id);
   const variant = credentials.findIndex((c) => c.id === id);
+  const { t } = useLocale();
 
   if (!credential) {
     return (
@@ -348,16 +355,18 @@ export default function CertificatePage() {
         <div className="pointer-events-none absolute inset-0 bg-mesh animate-drift-2" />
         <div className="relative z-10 text-center">
           <Award className="size-12 text-muted-foreground/60 mx-auto" />
-          <h1 className="mt-4 text-xl font-semibold">Certificate not found</h1>
+          <h1 className="mt-4 text-xl font-semibold">
+            {t("certificates.notFound")}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground/60">
-            This credential doesn&apos;t exist or has been revoked.
+            {t("certificates.notFoundDescription")}
           </p>
           <Link
             href="/profile"
             className="mt-4 inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             <ArrowLeft className="size-3.5" />
-            Back to Profile
+            {t("certificates.backToProfile")}
           </Link>
         </div>
       </div>
@@ -379,15 +388,26 @@ export default function CertificatePage() {
 
   const details = [
     {
-      label: "Mint Address",
+      label: t("certificates.mintAddress"),
       value: truncatedMint,
       full: credential.mintAddress,
       copyable: true,
     },
-    { label: "Owner", value: truncatedOwner, full: MOCK_OWNER, copyable: true },
-    { label: "Standard", value: "Metaplex Core" },
-    { label: "Type", value: "Soulbound (Non-Transferable)" },
-    { label: "Network", value: "Solana Mainnet" },
+    {
+      label: t("certificates.owner"),
+      value: truncatedOwner,
+      full: MOCK_OWNER,
+      copyable: true,
+    },
+    {
+      label: t("certificates.standard"),
+      value: t("certificates.metaplexCore"),
+    },
+    { label: t("certificates.type"), value: t("certificates.soulbound") },
+    {
+      label: t("certificates.network"),
+      value: t("certificates.solanaMainnet"),
+    },
   ];
 
   return (
@@ -401,7 +421,7 @@ export default function CertificatePage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/70 hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3.5" />
-          Back to Profile
+          {t("certificates.backToProfile")}
         </Link>
 
         {/* NFT Artwork */}
@@ -424,11 +444,11 @@ export default function CertificatePage() {
             </span>
             <span className="text-muted-foreground/50">·</span>
             <span className="text-muted-foreground/60">
-              Earned {credential.earnedAt}
+              {t("certificates.earnedAt", { date: credential.earnedAt })}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground/60">
-            Issued to @{userProfile.username}
+            {t("certificates.issuedTo", { username: userProfile.username })}
           </p>
         </div>
 
@@ -441,7 +461,7 @@ export default function CertificatePage() {
             className="flex items-center gap-1.5 rounded-lg border border-border/40 px-3 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
           >
             <Twitter className="size-3.5" />
-            Share
+            {t("common.share")}
           </a>
           <button
             onClick={() => {
@@ -450,17 +470,19 @@ export default function CertificatePage() {
             className="flex items-center gap-1.5 rounded-lg border border-border/40 px-3 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
           >
             <Link2 className="size-3.5" />
-            Copy Link
+            {t("common.copyLink")}
           </button>
           <button className="flex items-center gap-1.5 rounded-lg border border-border/40 px-3 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
             <Download className="size-3.5" />
-            Download
+            {t("common.download")}
           </button>
         </div>
 
         {/* On-Chain Details */}
         <div className="mt-10">
-          <h2 className="text-lg font-semibold">On-Chain Details</h2>
+          <h2 className="text-lg font-semibold">
+            {t("certificates.onChainDetails")}
+          </h2>
           <div className="mt-3 rounded-xl border border-border/30 divide-y divide-border/15">
             {details.map((row) => (
               <div
@@ -484,7 +506,7 @@ export default function CertificatePage() {
                 className="flex items-center gap-1.5 text-xs text-primary hover:underline"
               >
                 <ExternalLink className="size-3" />
-                View on Solana Explorer
+                {t("certificates.viewOnExplorer")}
               </a>
             </div>
           </div>
@@ -493,7 +515,9 @@ export default function CertificatePage() {
         {/* Related Course */}
         {relatedCourse && (
           <div className="mt-10">
-            <h2 className="text-lg font-semibold">Related Course</h2>
+            <h2 className="text-lg font-semibold">
+              {t("certificates.relatedCourse")}
+            </h2>
             <Link
               href={`/courses/${relatedCourse.slug}`}
               className="mt-3 flex items-center gap-3 rounded-xl border border-border/30 p-4 hover:border-border/50 transition-colors"
