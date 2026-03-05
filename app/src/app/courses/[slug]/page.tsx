@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -183,6 +183,9 @@ export default function CourseDetailPage() {
   const { t } = useLocale();
   const [enrollmentStatus, setEnrollmentStatus] =
     useState<EnrollmentStatus>("not-enrolled");
+  const [completedLessonSet, setCompletedLessonSet] = useState<Set<number>>(
+    new Set(),
+  );
 
   useEffect(() => {
     getCourse(slug).then((c) => {
@@ -191,35 +194,56 @@ export default function CourseDetailPage() {
   }, [slug]);
 
   useEffect(() => {
-    if (!connected || !publicKey || !course) {
-      setEnrollmentStatus("not-enrolled");
-      return;
-    }
+    if (!connected || !publicKey) return;
     const wallet = publicKey.toBase58();
-    progressService.getProgress(wallet, course.slug).then((p) => {
-      if (!p) setEnrollmentStatus("not-enrolled");
-      else if (p.completedAt) setEnrollmentStatus("completed");
+    progressService.getProgress(wallet, slug).then((p) => {
+      if (!p) return;
+      setCompletedLessonSet(new Set(p.completedLessons));
+      if (p.completedAt) setEnrollmentStatus("completed");
       else setEnrollmentStatus("enrolled");
     });
-  }, [connected, publicKey, course]);
+    return () => {
+      setEnrollmentStatus("not-enrolled");
+      setCompletedLessonSet(new Set());
+    };
+  }, [connected, publicKey, slug]);
+
+  // Derive course with merged progress
+  const mergedCourse = useMemo(() => {
+    if (!course) return null;
+    if (completedLessonSet.size === 0) return course;
+    let idx = 0;
+    return {
+      ...course,
+      completed: completedLessonSet.size,
+      modules: course.modules.map((mod) => ({
+        ...mod,
+        lessons: mod.lessons.map((lesson) => ({
+          ...lesson,
+          completed: completedLessonSet.has(idx++),
+        })),
+      })),
+    };
+  }, [course, completedLessonSet]);
 
   const handleEnroll = useCallback(async () => {
     if (!connected) {
       setVisible(true);
       return;
     }
-    if (!publicKey || !course || enrollmentStatus !== "not-enrolled") return;
+    if (!publicKey || !mergedCourse || enrollmentStatus !== "not-enrolled")
+      return;
     setEnrollmentStatus("enrolling");
     try {
-      await progressService.enroll(publicKey.toBase58(), course.slug);
-      analyticsEvents.courseEnrolled(course.slug);
+      await progressService.enroll(publicKey.toBase58(), mergedCourse.slug);
+      analyticsEvents.courseEnrolled(mergedCourse.slug);
       setEnrollmentStatus("enrolled");
     } catch {
       setEnrollmentStatus("not-enrolled");
     }
-  }, [connected, publicKey, course, enrollmentStatus, setVisible]);
+  }, [connected, publicKey, mergedCourse, enrollmentStatus, setVisible]);
 
-  if (!course) {
+  if (!mergedCourse) {
     return (
       <div className="relative min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -242,12 +266,12 @@ export default function CourseDetailPage() {
   }
 
   const progress =
-    course.completed > 0
-      ? Math.round((course.completed / course.lessons) * 100)
+    mergedCourse.completed > 0
+      ? Math.round((mergedCourse.completed / mergedCourse.lessons) * 100)
       : 0;
 
-  const totalModules = course.modules.length;
-  const completedModules = course.modules.filter((m) =>
+  const totalModules = mergedCourse.modules.length;
+  const completedModules = mergedCourse.modules.filter((m) =>
     m.lessons.every((l) => l.completed),
   ).length;
 
@@ -257,7 +281,7 @@ export default function CourseDetailPage() {
       <div className="pointer-events-none absolute inset-0 bg-mesh animate-drift-2" />
       <div
         className="pointer-events-none absolute top-[10%] right-[15%] h-72 w-72 rounded-full blur-[120px] opacity-20 animate-float-1"
-        style={{ background: course.accent }}
+        style={{ background: mergedCourse.accent }}
       />
       <div className="pointer-events-none absolute bottom-[20%] left-[5%] h-56 w-56 rounded-full bg-amber-500/8 blur-[80px] animate-float-2" />
 
@@ -272,7 +296,7 @@ export default function CourseDetailPage() {
           </Link>
           <span>/</span>
           <span className="text-foreground truncate">
-            {t(`courseContent.${course.slug}.title`)}
+            {t(`courseContent.${mergedCourse.slug}.title`)}
           </span>
         </div>
 
@@ -283,40 +307,40 @@ export default function CourseDetailPage() {
             <div className="flex items-center gap-2">
               <span
                 className="text-[10px] font-bold uppercase tracking-widest"
-                style={{ color: course.accent }}
+                style={{ color: mergedCourse.accent }}
               >
-                {t(`courses.topic${course.topic}`)}
+                {t(`courses.topic${mergedCourse.topic}`)}
               </span>
               <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                {t(`courses.${course.difficulty.toLowerCase()}`)}
+                {t(`courses.${mergedCourse.difficulty.toLowerCase()}`)}
               </Badge>
             </div>
 
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              {t(`courseContent.${course.slug}.title`)}
+              {t(`courseContent.${mergedCourse.slug}.title`)}
             </h1>
 
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-2xl">
-              {t(`courseContent.${course.slug}.longDescription`)}
+              {t(`courseContent.${mergedCourse.slug}.longDescription`)}
             </p>
 
             {/* Meta row */}
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Clock className="size-4" />
-                {course.duration}
+                {mergedCourse.duration}
               </span>
               <span className="flex items-center gap-1.5">
                 <BookOpen className="size-4" />
-                {course.lessons} {t("common.lessons")}
+                {mergedCourse.lessons} {t("common.lessons")}
               </span>
               <span className="flex items-center gap-1.5">
                 <Flame className="size-4 text-xp" />
-                {course.xp} XP
+                {mergedCourse.xp} XP
               </span>
               <span className="flex items-center gap-1.5">
                 <Users className="size-4" />
-                {course.instructor.name}
+                {mergedCourse.instructor.name}
               </span>
             </div>
 
@@ -326,18 +350,18 @@ export default function CourseDetailPage() {
                 {t("courses.curriculum")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {totalModules} {t("common.modules")} · {course.lessons}{" "}
-                {t("common.lessons")} · {course.duration} {t("common.total")}
+                {totalModules} {t("common.modules")} · {mergedCourse.lessons}{" "}
+                {t("common.lessons")} · {mergedCourse.duration} {t("common.total")}
               </p>
 
               <div className="mt-6 space-y-3">
-                {course.modules.map((module, i) => (
+                {mergedCourse.modules.map((module, i) => (
                   <ModuleSection
                     key={module.id}
                     module={module}
                     index={i}
-                    accent={course.accent}
-                    courseSlug={course.slug}
+                    accent={mergedCourse.accent}
+                    courseSlug={mergedCourse.slug}
                     defaultOpen={i === 0}
                     locked={
                       enrollmentStatus === "not-enrolled" ||
@@ -361,7 +385,7 @@ export default function CourseDetailPage() {
                 {/* Progress bar */}
                 <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {course.completed}/{course.lessons} {t("common.lessons")}
+                    {mergedCourse.completed}/{mergedCourse.lessons} {t("common.lessons")}
                   </span>
                   <span>{progress}%</span>
                 </div>
@@ -370,7 +394,7 @@ export default function CourseDetailPage() {
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${progress}%`,
-                      background: course.accent,
+                      background: mergedCourse.accent,
                     }}
                   />
                 </div>
@@ -392,16 +416,16 @@ export default function CourseDetailPage() {
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
                     <p
                       className="text-xl font-semibold"
-                      style={{ color: course.accent }}
+                      style={{ color: mergedCourse.accent }}
                     >
-                      {course.xp}
+                      {mergedCourse.xp}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       {t("courses.xpToEarn")}
                     </p>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-center">
-                    <p className="text-xl font-semibold">{course.duration}</p>
+                    <p className="text-xl font-semibold">{mergedCourse.duration}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {t("common.duration")}
                     </p>
@@ -415,7 +439,7 @@ export default function CourseDetailPage() {
                     size="lg"
                     disabled
                     style={{
-                      background: course.accent,
+                      background: mergedCourse.accent,
                       color: "#000",
                       opacity: 0.7,
                     }}
@@ -428,10 +452,10 @@ export default function CourseDetailPage() {
                     className="mt-5 w-full font-medium"
                     size="lg"
                     asChild
-                    style={{ background: course.accent, color: "#000" }}
+                    style={{ background: mergedCourse.accent, color: "#000" }}
                   >
                     <Link
-                      href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+                      href={`/courses/${mergedCourse.slug}/lessons/${mergedCourse.modules[0]?.lessons[0]?.id ?? "l1"}`}
                     >
                       {t("courses.continuelearning")}
                       <ArrowRight className="size-4" />
@@ -443,7 +467,7 @@ export default function CourseDetailPage() {
                     size="lg"
                     disabled
                     style={{
-                      background: course.accent,
+                      background: mergedCourse.accent,
                       color: "#000",
                       opacity: 0.7,
                     }}
@@ -456,7 +480,7 @@ export default function CourseDetailPage() {
                     className="mt-5 w-full font-medium"
                     size="lg"
                     onClick={handleEnroll}
-                    style={{ background: course.accent, color: "#000" }}
+                    style={{ background: mergedCourse.accent, color: "#000" }}
                   >
                     {connected
                       ? t("courses.enrollNow")
@@ -470,21 +494,21 @@ export default function CourseDetailPage() {
                   <div
                     className="flex size-9 items-center justify-center rounded-full text-xs font-bold"
                     style={{
-                      background: `${course.accent}15`,
-                      color: course.accent,
+                      background: `${mergedCourse.accent}15`,
+                      color: mergedCourse.accent,
                     }}
                   >
-                    {course.instructor.name
+                    {mergedCourse.instructor.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {course.instructor.name}
+                      {mergedCourse.instructor.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {course.instructor.role}
+                      {mergedCourse.instructor.role}
                     </p>
                   </div>
                 </div>
@@ -494,7 +518,7 @@ export default function CourseDetailPage() {
         </div>
 
         {/* ── Reviews ── */}
-        {course.reviews.length > 0 && (
+        {mergedCourse.reviews.length > 0 && (
           <div className="mt-14">
             <h2 className="text-xl font-semibold tracking-tight">
               {t("courses.studentReviews")}
@@ -504,7 +528,7 @@ export default function CourseDetailPage() {
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {course.reviews.map((review, i) => (
+              {mergedCourse.reviews.map((review, i) => (
                 <Card
                   key={i}
                   className="border-border/50 bg-card/60 backdrop-blur-sm"
@@ -515,8 +539,8 @@ export default function CourseDetailPage() {
                         <div
                           className="flex size-8 items-center justify-center rounded-full text-xs font-bold"
                           style={{
-                            background: `${course.accent}15`,
-                            color: course.accent,
+                            background: `${mergedCourse.accent}15`,
+                            color: mergedCourse.accent,
                           }}
                         >
                           {review.name[0]}
@@ -528,7 +552,7 @@ export default function CourseDetailPage() {
                       <StarRating rating={review.rating} />
                     </div>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                      &ldquo;{t(`courseContent.${course.slug}.r${i}`)}&rdquo;
+                      &ldquo;{t(`courseContent.${mergedCourse.slug}.r${i}`)}&rdquo;
                     </p>
                   </CardContent>
                 </Card>
@@ -544,10 +568,10 @@ export default function CourseDetailPage() {
               size="lg"
               className="font-medium"
               asChild
-              style={{ background: course.accent, color: "#000" }}
+              style={{ background: mergedCourse.accent, color: "#000" }}
             >
               <Link
-                href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? "l1"}`}
+                href={`/courses/${mergedCourse.slug}/lessons/${mergedCourse.modules[0]?.lessons[0]?.id ?? "l1"}`}
               >
                 {t("courses.continuelearning")}
                 <ArrowRight className="size-4" />
@@ -558,7 +582,7 @@ export default function CourseDetailPage() {
               size="lg"
               className="font-medium"
               disabled
-              style={{ background: course.accent, color: "#000", opacity: 0.7 }}
+              style={{ background: mergedCourse.accent, color: "#000", opacity: 0.7 }}
             >
               <Check className="size-4" />
               {t("courses.completed")}
@@ -568,7 +592,7 @@ export default function CourseDetailPage() {
               size="lg"
               className="font-medium"
               onClick={handleEnroll}
-              style={{ background: course.accent, color: "#000" }}
+              style={{ background: mergedCourse.accent, color: "#000" }}
             >
               {connected ? t("courses.enrollNow") : t("common.connectWallet")}
               <ArrowRight className="size-4" />
