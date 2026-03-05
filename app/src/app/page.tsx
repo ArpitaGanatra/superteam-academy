@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LearningTracks } from "@/components/course/learning-tracks";
 import { GlowButton } from "@/components/ui/glow-button";
 import { useLocale } from "@/providers/locale-provider";
+import { useTheme } from "next-themes";
 
 const SocialProof = dynamic(
   () => import("@/components/course/social-proof").then((m) => m.SocialProof),
@@ -95,6 +96,9 @@ const codeLines = [
 
 export default function LandingPage() {
   const { t } = useLocale();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const previewBg = isDark ? "#0c0c0e" : "#f0fdf4";
 
   return (
     <div>
@@ -229,7 +233,7 @@ export default function LandingPage() {
                   {t("landing.step1Description")}
                 </p>
                 {/* Mini wallet mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]" aria-hidden="true">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50" style={{ background: previewBg }} aria-hidden="true">
                   <div className="flex items-center gap-2 border-b border-border/30 px-3 py-2">
                     <div className="size-4 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500" />
                     <span className="text-[10px] font-medium text-muted-foreground/60">
@@ -316,7 +320,7 @@ export default function LandingPage() {
                   {t("landing.step2Description")}
                 </p>
                 {/* Mini editor mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]" aria-hidden="true">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50" style={{ background: previewBg }} aria-hidden="true">
                   <div className="flex items-center gap-1.5 border-b border-border/30 px-3 py-1.5">
                     <div className="size-1.5 rounded-full bg-[#ff5f57]" />
                     <div className="size-1.5 rounded-full bg-[#febc2e]" />
@@ -371,7 +375,7 @@ export default function LandingPage() {
                   {t("landing.step3Description")}
                 </p>
                 {/* Mini NFT certificate mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e] p-4" aria-hidden="true">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 p-4" style={{ background: previewBg }} aria-hidden="true">
                   <div className="mx-auto flex size-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
                     <GraduationCap className="size-6 text-primary" />
                   </div>

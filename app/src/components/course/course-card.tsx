@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import type { CourseDetail } from "@/data/courses";
 import { useLocale } from "@/providers/locale-provider";
+import { useTheme } from "next-themes";
 
 const difficultyKeys: Record<string, string> = {
   Beginner: "courses.beginner",
@@ -28,6 +29,8 @@ const topicKeys: Record<string, string> = {
 
 export function CourseCard({ course }: { course: CourseDetail }) {
   const { t } = useLocale();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const progress =
     course.completed > 0
@@ -38,15 +41,23 @@ export function CourseCard({ course }: { course: CourseDetail }) {
     <Link href={`/courses/${course.slug}`} className="group">
       <Card className="h-full border-border/50 bg-card/80 backdrop-blur-sm p-0 gap-0 overflow-hidden transition-all hover:border-primary/30 hover:bg-card hover:shadow-lg hover:shadow-primary/5">
         {/* Code preview header */}
-        <div aria-hidden="true" className="relative h-36 overflow-hidden border-b border-border/50 bg-[#0c0c0e] px-5 pt-4">
+        <div
+          aria-hidden="true"
+          className="relative h-36 overflow-hidden border-b border-border/50 px-5 pt-4"
+          style={{ background: isDark ? "#0c0c0e" : "#f0fdf4" }}
+        >
           <div
-            className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-[60px] opacity-30"
-            style={{ background: course.accent }}
+            className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-[60px]"
+            style={{ background: course.accent, opacity: isDark ? 0.3 : 0.2 }}
           />
-          <div className="font-mono text-[11px] leading-[1.7] text-[#a1a1aa66]">
+          <div
+            className={`font-mono text-xs leading-[1.7] ${isDark ? "text-[#a1a1aa66]" : "text-green-950"}`}
+          >
             {course.codePreview.map((line, i) => (
               <div key={i} className="truncate">
-                <span className="mr-3 inline-block w-3 text-right text-[10px] text-[#a1a1aa33]">
+                <span
+                  className={`mr-3 inline-block w-3 text-right text-[10px] ${isDark ? "text-[#a1a1aa33]" : "text-green-950/50"}`}
+                >
                   {i + 1}
                 </span>
                 {line}
@@ -63,7 +74,12 @@ export function CourseCard({ course }: { course: CourseDetail }) {
           >
             <course.icon className="size-4" />
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#0c0c0e] to-transparent" />
+          <div
+            className="absolute inset-x-0 bottom-0 h-12"
+            style={{
+              background: `linear-gradient(to top, ${isDark ? "#0c0c0e" : "#f0fdf4"}, transparent)`,
+            }}
+          />
         </div>
 
         {/* Card body */}

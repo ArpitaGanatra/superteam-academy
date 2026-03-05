@@ -3,9 +3,13 @@
 import { Code, Zap, Shield, Trophy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useLocale } from "@/providers/locale-provider";
+import { useTheme } from "next-themes";
 
 export function PlatformFeatures() {
   const { t } = useLocale();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const previewBg = isDark ? "#0c0c0e" : "#f0fdf4";
 
   return (
     <section className="relative py-28">
@@ -37,7 +41,11 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* Mini editor mockup */}
-            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
+            <div
+              aria-hidden="true"
+              className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 overflow-hidden"
+              style={{ background: previewBg }}
+            >
               <div className="flex items-center gap-1.5 border-b border-border/30 px-3 py-2">
                 <div className="size-2 rounded-full bg-[#ff5f57]" />
                 <div className="size-2 rounded-full bg-[#febc2e]" />
@@ -49,19 +57,19 @@ export function PlatformFeatures() {
               <div className="px-3 py-3 font-mono text-[11px] leading-[1.7]">
                 <div>
                   <span className="text-muted-foreground/50">1 </span>
-                  <span style={{ color: "#c792ea" }}>pub fn </span>
-                  <span style={{ color: "#82aaff" }}>transfer</span>
-                  <span style={{ color: "#babed8" }}>(ctx: Context) {"{"}</span>
+                  <span style={{ color: isDark ? "#c792ea" : "#7c3aed" }}>pub fn </span>
+                  <span style={{ color: isDark ? "#82aaff" : "#2563eb" }}>transfer</span>
+                  <span style={{ color: isDark ? "#babed8" : "#1a3a2a" }}>(ctx: Context) {"{"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground/50">2 </span>
-                  <span style={{ color: "#babed8" }}>{"  "}let amount = </span>
-                  <span style={{ color: "#f78c6c" }}>1000</span>
-                  <span style={{ color: "#89ddff" }}>;</span>
+                  <span style={{ color: isDark ? "#babed8" : "#1a3a2a" }}>{"  "}let amount = </span>
+                  <span style={{ color: isDark ? "#f78c6c" : "#c2410c" }}>1000</span>
+                  <span style={{ color: isDark ? "#89ddff" : "#0d9488" }}>;</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground/50">3 </span>
-                  <span style={{ color: "#546e7a" }}>
+                  <span style={{ color: isDark ? "#546e7a" : "#6b7280" }}>
                     {"  "}// Your code here
                   </span>
                 </div>
@@ -71,7 +79,7 @@ export function PlatformFeatures() {
                 </div>
                 <div>
                   <span className="text-muted-foreground/50">5 </span>
-                  <span style={{ color: "#89ddff" }}>{"}"}</span>
+                  <span style={{ color: isDark ? "#89ddff" : "#0d9488" }}>{"}"}</span>
                 </div>
               </div>
               {/* Status bar */}
@@ -120,7 +128,8 @@ export function PlatformFeatures() {
               ].map((nft) => (
                 <div
                   key={nft.name}
-                  className="flex-1 rounded-lg border border-border/50 bg-[#0c0c0e] p-3 text-center"
+                  className="flex-1 rounded-lg border border-border/50 p-3 text-center"
+                  style={{ background: previewBg }}
                 >
                   <div
                     className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg"
@@ -157,7 +166,11 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* XP progress mockup */}
-            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] p-4">
+            <div
+              aria-hidden="true"
+              className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 p-4"
+              style={{ background: previewBg }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex size-8 items-center justify-center rounded-full bg-xp/10 text-xs font-bold text-xp">
@@ -222,7 +235,11 @@ export function PlatformFeatures() {
               </p>
             </div>
             {/* Leaderboard mockup */}
-            <div aria-hidden="true" className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 bg-[#0c0c0e] overflow-hidden">
+            <div
+              aria-hidden="true"
+              className="mt-5 mx-4 mb-4 rounded-lg border border-border/50 overflow-hidden"
+              style={{ background: previewBg }}
+            >
               {[
                 {
                   rank: 1,

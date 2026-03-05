@@ -1,4 +1,5 @@
 import type { CourseDetail, LessonContent } from "@/types";
+import { courses as hardcodedCourses } from "@/data/courses";
 import { fetchFromCMS, queries } from "./sanity";
 import {
   Blocks,
@@ -83,7 +84,9 @@ function mapCourse(c: SanityCourse): CourseDetail {
     xp: c.xp ?? 0,
     accent: c.accent ?? "#34d399",
     icon: iconMap[c.icon ?? ""] ?? Blocks,
-    codePreview: c.codePreview ?? [],
+    codePreview: c.codePreview?.length
+      ? c.codePreview
+      : (hardcodedCourses.find((h) => h.slug === c.slug)?.codePreview ?? []),
     instructor: c.instructor ?? { name: "Instructor", role: "Developer" },
     modules:
       c.modules?.map((m) => ({
@@ -119,7 +122,7 @@ function mapLesson(l: SanityLesson, courseSlug: string): LessonContent {
 export async function getAllCourses(): Promise<CourseDetail[]> {
   const data = await fetchFromCMS<SanityCourse[]>(queries.allCourses);
   if (data && data.length > 0) return data.map(mapCourse);
-  return [];
+  return hardcodedCourses;
 }
 
 export async function getCourse(slug: string): Promise<CourseDetail | null> {
