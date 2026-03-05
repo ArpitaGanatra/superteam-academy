@@ -87,7 +87,7 @@ export class LocalProgressService implements ProgressService {
     saveProgress(all);
 
     // Stub XP: 25 per lesson
-    return { xpEarned: 25, txSignature: `stub-lesson-${Date.now()}` };
+    return { xpEarned: 100, txSignature: `stub-lesson-${Date.now()}` };
   }
 
   async finalizeCourse(

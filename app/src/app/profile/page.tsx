@@ -467,10 +467,8 @@ export default function ProfilePage() {
             : "In progress",
           xpEarned:
             course.lessons > 0
-              ? Math.round(
-                  (progress.completedLessons.length / course.lessons) *
-                    course.xp,
-                )
+              ? progress.completedLessons.length *
+                Math.floor(course.xp / course.lessons)
               : 0,
         };
       })

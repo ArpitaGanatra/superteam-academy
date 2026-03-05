@@ -123,7 +123,7 @@ export default function LandingPage() {
                 variant="outline"
                 size="lg"
                 asChild
-                className="relative bg-[#0a0a0c] dark:bg-[#0a0a0c] border-transparent"
+                className="relative bg-[#0a0a0c] dark:bg-[#0a0a0c] text-white border-transparent"
               >
                 <Link href="/courses">
                   {t("landing.exploreCourses")}

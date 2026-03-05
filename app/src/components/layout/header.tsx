@@ -56,7 +56,7 @@ export function Header() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200 ${scrolled ? "bg-background/80 backdrop-blur-md border-b border-border/50" : "bg-transparent"}`}>
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6 pt-2">
+      <div className="mx-auto flex h-16 items-center justify-between px-6 pt-2">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
